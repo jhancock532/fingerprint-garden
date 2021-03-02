@@ -40,6 +40,9 @@ class ColorGUIHelper {
   //console.log(visitorId);
 })();
 
+
+const canvasContainer = document.getElementById( 'canvas-container' );
+
 /* Three.js */
 const scene = new THREE.Scene();
 scene.background = new THREE.Color( 0xcce0ff );
@@ -51,7 +54,7 @@ camera.position.y = 3;
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
+canvasContainer.appendChild( renderer.domElement );
 
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.maxPolarAngle = Math.PI * 0.45;
@@ -88,8 +91,8 @@ loader.load( 'models/camping-scene/scene.gltf',
           //I've considered this not worthwhile to worry about. Shame, the transparent trees looked nicer.
           
           //child.material.depthTest = true;
-          //child.material.depthWrite = true;
-          //child.material.transparent = false;
+          child.material.depthWrite = true;
+          child.material.transparent = false;
 
           //if (child.material.name = "lambert6"){
           //  child.material.renderOrder = 1;
