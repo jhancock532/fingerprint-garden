@@ -61,7 +61,16 @@ controls.maxPolarAngle = Math.PI * 0.45;
 controls.minDistance = 5;
 controls.maxDistance = 20;
 
-let mixer;
+const color = 0xFFFFFF;
+const intensity = 0.89;
+const light = new THREE.AmbientLight(color, intensity);
+scene.add(light);
+
+gui.addColor(new ColorGUIHelper(light, 'color'), 'value').name('Light Colour');
+gui.add(light, 'intensity', 0, 2, 0.01).name("Light Intensity");
+
+
+let campfireMixer, humanMixer;
 const clock = new THREE.Clock();
 
 /* Model Loading */
@@ -102,22 +111,53 @@ loader.load( 'models/camping-scene/scene.gltf',
       }
     });
 
-    mixer = new THREE.AnimationMixer( gltf.scene );
-		var action = mixer.clipAction( gltf.animations[ 0 ] );
+    campfireMixer = new THREE.AnimationMixer( gltf.scene );
+		var action = campfireMixer.clipAction( gltf.animations[ 0 ] );
 		action.play();
     
 	},
 	function ( xhr ) {
-    //Loading progress event.
-    if (xhr != Infinity){
-      console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-    }
+    console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
 	},
 	function ( error ) {
 		console.log( 'An error happened' );
 	}
 );
 
+loader.load( 'models/Male_Suit.glb',
+
+  //From animated Male Characters by http://quaternius.com/?i=1
+
+	function ( gltf ) {
+    gltf.scene.position.set(3,0,3);
+    gltf.scene.scale.set(0.4,0.4,0.4);
+    gltf.scene.rotateY(0.5);
+		scene.add( gltf.scene );
+
+
+
+    gltf.scene.traverse( function ( child ) {
+      if ( child.isMesh ) {
+        child.material.type = "MeshStandardMaterial";
+        child.material.metalness = 0;
+
+        child.material.color = {r: Math.random(), g: Math.random(), b: Math.random()};
+      }
+    });
+
+    humanMixer = new THREE.AnimationMixer( gltf.scene );
+		var action = humanMixer.clipAction( gltf.animations[ 0 ] );
+		action.play();
+    
+	},
+	function ( xhr ) {
+    //Loading progress event.
+    console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+	},
+	function ( error ) {
+		console.log( 'An error happened' );
+	}
+);
 
 /* Resize the Window */
 window.addEventListener('resize', onWindowResize);
@@ -152,7 +192,8 @@ const animate = function () {
 
   var delta = clock.getDelta();
 
-	if ( mixer ) mixer.update( delta );
+	if ( humanMixer ) humanMixer.update( delta );
+  if ( campfireMixer ) campfireMixer.update( delta );
 
   renderer.render( scene, camera );
   
