@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "snowpack dev",
+    "start": "snowpack dev --polyfill-node",
     "build": "snowpack build"
   },
   "name": "being-togther",
@@ -8,6 +8,7 @@
   "main": "script.js",
   "dependencies": {
     "@fingerprintjs/fingerprintjs": "^3.0.6",
+    "backendless": "^6.2.4",
     "dat.gui": "^0.7.7",
     "snowpack": "^3.0.13",
     "stats.js": "^0.17.0",
