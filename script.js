@@ -7,6 +7,8 @@ import Backendless from 'backendless'; //requires --polyfill-node to run with Sn
 
 import * as Participant from './js/Participant.js';
 
+let participantID = makeRandomParticipantID(16);
+
 /* Backendless API */
 const API_HOST = 'https://eu-api.backendless.com';
 const APP_ID = '45B6BB81-7AE1-BDD6-FF2B-68D2D53BF500';
@@ -15,26 +17,53 @@ const API_KEY = 'C754572D-9FFC-4A9F-9E2B-01D66026EDC1';
 Backendless.serverURL = API_HOST;
 Backendless.initApp(APP_ID, API_KEY);
 
-let participantList = [];
-let thisParticipant;
+const channel = Backendless.Messaging.subscribe('default');
 
-const activeParticipantsTable = Backendless.Data.of('activeParticipants');
-activeParticipantsTable.find(Backendless.DataQueryBuilder.create().setPageSize(100).setSortBy('created'))
+const onMessage = message => {
+  console.log(message.message);
+  let participantObject = JSON.parse(message.message);
+
+  if (message.subtopic == "NEW PARTICIPANT"){
+
+    if (participantID != participantObject.id) {
+      participantManager.generateNewParticipant(participantObject.id, participantObject.hash, false);
+    }
+  }
+
+  if (message.subtopic == "PRESENT"){
+    if (participantManager.participantIsPresent(participantObject.id)){
+      participantManager.resetParticipantTimeToLive(participantObject.id);
+    } else {
+      participantManager.generateNewParticipant(participantObject.id, participantObject.hash, false);
+    }
+  }
+}
+
+setInterval(function sendPresenceSignal(){
+  let participantObject = {
+    "id": participantID,
+    "hash": participantHash
+  }
+
+  const request = Backendless.Messaging.publish('default', JSON.stringify(participantObject), {subtopic: "PRESENT"});
+}, 1000),
+
+channel.addMessageListener(onMessage);
+
+let participantList = [];
+
+const ghostParticipants = Backendless.Data.of('ghostParticipants');
+ghostParticipants.find(Backendless.DataQueryBuilder.create().setPageSize(100).setSortBy('created'))
 .then(result => { 
   participantList = result;
-  console.log("GOT PARTICIPANTS: ", result); 
-  //Use for loop to get rid of participants older than 24 hours, for when beforeunload doesn't work.
+  console.log("GOT GHOST PARTICIPANTS: ", result); 
 });
 
-console.log("ADDING PARTICIPANT:");
-addParticipantToDatabase();
 
-function addParticipantToDatabase() {
-  activeParticipantsTable.save({ hash: '1f73a44ae0239c73a5908960cb408e1a', position: '{ "x": 0, "y": 0 }' })
+function addParticipantToDatabase(participantHash) {
+  ghostParticipants.save({ hash: participantHash })
     .then(function (object) {
       console.log("SAVE SUCCESSFUL: ", object)
-      thisParticipant = object;
-      enableRealTime();
     })
     .catch(function (error) {
       console.error("SAVE UNSUCCESSFUL: ", error.message)
@@ -42,53 +71,15 @@ function addParticipantToDatabase() {
     });
 }
 
-function removeThisParticipantFromDatabase() {
-  activeParticipantsTable.remove( { objectId: thisParticipant.objectId } )
- .then( function( timestamp ) {
-  console.log("DELETE SUCCESSFUL: ", timestamp);
-  })
- .catch( function( error ) {
-  console.error("DELETE UNSUCCESSFUL: ", error.message);
-  throw error;
-  });
+function makeRandomParticipantID(length) {
+  let result = '';
+  const characters  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
 }
-
-document.getElementById("removeParticipantButton").addEventListener("click", function(event){
-
-  removeThisParticipantFromDatabase();
-})
-
-window.addEventListener("beforeunload", function(event) { 
-  removeThisParticipantFromDatabase();
-});
-
-window.onbeforeunload = function(event) { removeThisParticipantFromDatabase(); };
-
-
-
-
-function enableRealTime() {
-  const rtHandlers = activeParticipantsTable.rt();
-  
-  rtHandlers.addCreateListener(participant => {
-    participantList = [...participantList, participant];
-  
-    console.log("CREATE EVENT: ", participantList);
-  });
-  
-  rtHandlers.addUpdateListener(participant => {
-    participantList = participantList.map(m => m.objectId === participant.objectId ? participant : m);
-  
-    console.log("UPDATE EVENT: ", participantList);
-  });
-  
-  rtHandlers.addDeleteListener(participant => {
-    participantList = participantList.filter(m => m.objectId !== participant.objectId);
-  
-    console.log("DELETE EVENT: ", participantList);
-  });
-}
-
 
 
  
@@ -127,7 +118,6 @@ let loadedFingerprint = false, participantHash;
   const result = await fp.get();
   participantHash = result.visitorId;
   loadedFingerprint = true;
-  //console.log(visitorId);
 })();
 
 const canvasContainer = document.getElementById( 'canvas-container' );
@@ -155,8 +145,6 @@ const controls = new OrbitControls( camera, renderer.domElement );
 controls.maxPolarAngle = Math.PI * 0.45;
 controls.minDistance = 5;
 controls.maxDistance = 20;
-
-
 
 const color = 0xFFFFFF;
 const intensity = 0.2;
@@ -271,15 +259,26 @@ const animate = function () {
 
   if (loadedFingerprint && participantManager.loadedModels && loading) {
     loading = false;
-    participantManager.generateNewParticipant(participantHash, false);
-    participantManager.generateNewParticipant("05908960cb408e1af73a44ae0239c73a", false);
-    participantManager.generateNewParticipant("0eee33ee3ee3e3e33e3e3e3eee3e3e33", false);
-    participantManager.generateNewParticipant("1cee3ffffffffffffffffffeee3e3e33", false);
+    participantManager.generateNewParticipant(participantID, participantHash, false);
+
+    let participantObject = {
+      "id": participantID,
+      "hash": participantHash
+    }
+
+    const request = Backendless.Messaging.publish('default', JSON.stringify(participantObject), {subtopic: "NEW PARTICIPANT"});
+
+    //add some logic here to check if hash already in database.
+    //don't bother adding the same hash to the DB
+    addParticipantToDatabase(participantHash);
   }
 
   let delta = clock.getDelta();
 
-  if ( loading == false ) participantManager.updateMixers( delta );
+  if ( loading == false ) {
+    participantManager.updateMixers( delta );
+    participantManager.updateParticipantsTimeToLive();
+  }
 
   renderer.render( scene, camera );
   

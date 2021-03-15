@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { SkeletonUtils } from 'three/examples/jsm/utils/SkeletonUtils.js';
 
+const TIME_TO_LIVE = 600; //4 seconds at 150fps
+
 export class Manager {
   constructor(scene) {
     this.participants = [];
@@ -47,8 +49,37 @@ export class Manager {
     }
   }
 
-  generateNewParticipant( hash, isGhost ){
-    //1f73a44ae0239c73a5908960cb408e1a
+  updateParticipantsTimeToLive(){
+    for (let i = 0; i < this.participants.length; i++){
+      this.participants[i].timeToLive -= 1;
+
+      if (this.participants[i].timeToLive <= 0){
+        this.scene.remove(this.participants[i].model); 
+        this.participants.splice(i, 1);
+      }
+    }
+  }
+
+  participantIsPresent( id ){
+    for (let i = 0; i < this.participants.length; i++){
+      if (this.participants[i].id == id){
+        return true
+      }
+    }
+
+    return false;
+  }
+
+  resetParticipantTimeToLive( id ){
+    for (let i = 0; i < this.participants.length; i++){
+      if (this.participants[i].id == id){
+        this.participants[i].timeToLive = TIME_TO_LIVE;
+      }
+    }
+  }
+
+  generateNewParticipant( id, hash, isGhost ){
+    //hash = "1f73a44ae0239c73a5908960cb408e1a";
     //Example fingerprint hash
 
     //First character determines model type;
@@ -58,12 +89,15 @@ export class Manager {
     //To duplicate a mesh with bones you can't just .clone() - remember Skeleton!
     //https://discourse.threejs.org/t/loading-a-gltf-model-twice-inside-the-loader-load/8373/2
 
+    //console.log(mesh)
+
     mesh.traverse( function ( child ) {
       if ( child.isMesh ) {
 
         let hashPosition = child.id % 32;
         //This assumes that each mesh has a unique id that when modded doesn't equal another mesh id
-        //Not a perfect solution, but it seems to work. id could be added in other stages as well
+        //Not a perfect solution, as the order in which models are loaded effects model display
+        //Create a custom traverse function?
 
         function generateHashValue(){
           let value = parseInt(hash.charAt(hashPosition), 16);
@@ -99,6 +133,7 @@ export class Manager {
     let meshPositionNumber = parseInt(hash.charAt(1), 16) % this.modelPositions.length;
 
     mesh.position.set(this.modelPositions[meshPositionNumber].x, 0 , this.modelPositions[meshPositionNumber].z);
+    mesh.position.set(Math.random()* 5, 0, Math.random()* 5);
 
     mesh.scale.set(0.5, 0.5, 0.5);
 
@@ -108,7 +143,7 @@ export class Manager {
     let action = animationMixer.clipAction( this.modelAnimations[0][5] );
     action.play();
 
-    this.participants.push( {model: mesh, mixer: animationMixer} );
+    this.participants.push( {hash: hash, id: id, model: mesh, mixer: animationMixer, timeToLive: TIME_TO_LIVE} );
 
     this.scene.add(mesh);
   }

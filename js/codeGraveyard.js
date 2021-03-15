@@ -90,3 +90,62 @@ loader.load( 'models/Male_Suit.glb',
 	}
 );
 */
+
+
+/* Server code wasn't fun */
+/*
+function removeThisParticipantFromDatabase() {
+  activeParticipantsTable.remove( { objectId: thisParticipant.objectId } )
+ .then( function( timestamp ) {
+  console.log("DELETE SUCCESSFUL: ", timestamp);
+  })
+ .catch( function( error ) {
+  console.error("DELETE UNSUCCESSFUL: ", error.message);
+  throw error;
+  });
+}
+
+function enableRealTime() {
+  const rtHandlers = activeParticipantsTable.rt();
+  
+  rtHandlers.addCreateListener(participant => {
+    participantList = [...participantList, participant];
+  
+    console.log("CREATE EVENT: ", participantList);
+  });
+  
+  rtHandlers.addUpdateListener(participant => {
+    participantList = participantList.map(m => m.objectId === participant.objectId ? participant : m);
+  
+    console.log("UPDATE EVENT: ", participantList);
+  });
+  
+  rtHandlers.addDeleteListener(participant => {
+    participantList = participantList.filter(m => m.objectId !== participant.objectId);
+  
+    console.log("DELETE EVENT: ", participantList);
+  });
+}
+
+document.getElementById("removeParticipantButton").addEventListener("click", function(event){
+  removeThisParticipantFromDatabase();
+})
+
+
+*/
+
+//Mozilla says it is typically better to use this
+
+/*
+window.addEventListener("beforeunload", function(event) { 
+  window.localStorage.setItem("refreshed", "false");
+  removeThisParticipantFromDatabase();
+});
+*/
+
+//... over this. I don't know why though. Research?
+// window.onbeforeunload = function(event) { ... };
+
+//participantManager.generateNewParticipant("05908960cb408e1af73a44ae0239c73a", false);
+//participantManager.generateNewParticipant("0eee33ee3ee3e3e33e3e3e3eee3e3e33", false);
+//participantManager.generateNewParticipant("1cee3ffffffffffffffffffeee3e3e33", false);
