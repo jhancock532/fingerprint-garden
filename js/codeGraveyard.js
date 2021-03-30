@@ -1,7 +1,7 @@
 /*
 loader.load( 'models/camping-scene/scene.gltf',
 
-  //"camping buscraft ambience" (https://skfb.ly/6V9Ru) by Edgar_koh 
+  //"camping buscraft ambience" (https://skfb.ly/6V9Ru) by Edgar_koh
   //is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 
 	function ( gltf ) {
@@ -21,7 +21,7 @@ loader.load( 'models/camping-scene/scene.gltf',
           //Issues with non-transparent parts of the model clipping in front of other parts.
           //The solution would be to specify render order perhaps?
           //I've considered this not worthwhile to worry about. Shame, the transparent trees looked nicer.
-          
+
           //child.material.depthTest = true;
           child.material.depthWrite = true;
           child.material.transparent = false;
@@ -37,7 +37,7 @@ loader.load( 'models/camping-scene/scene.gltf',
     campfireMixer = new THREE.AnimationMixer( gltf.scene );
 		var action = campfireMixer.clipAction( gltf.animations[ 0 ] );
 		action.play();
-    
+
 	},
 	function ( xhr ) {
     console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
@@ -79,7 +79,7 @@ loader.load( 'models/Male_Suit.glb',
     humanMixer = new THREE.AnimationMixer( gltf.scene );
 		var action = humanMixer.clipAction( gltf.animations[ 0 ] );
 		action.play();
-    
+
 	},
 	function ( xhr ) {
     //Loading progress event.
@@ -107,22 +107,22 @@ function removeThisParticipantFromDatabase() {
 
 function enableRealTime() {
   const rtHandlers = activeParticipantsTable.rt();
-  
+
   rtHandlers.addCreateListener(participant => {
     participantList = [...participantList, participant];
-  
+
     console.log("CREATE EVENT: ", participantList);
   });
-  
+
   rtHandlers.addUpdateListener(participant => {
     participantList = participantList.map(m => m.objectId === participant.objectId ? participant : m);
-  
+
     console.log("UPDATE EVENT: ", participantList);
   });
-  
+
   rtHandlers.addDeleteListener(participant => {
     participantList = participantList.filter(m => m.objectId !== participant.objectId);
-  
+
     console.log("DELETE EVENT: ", participantList);
   });
 }
@@ -137,7 +137,7 @@ document.getElementById("removeParticipantButton").addEventListener("click", fun
 //Mozilla says it is typically better to use this
 
 /*
-window.addEventListener("beforeunload", function(event) { 
+window.addEventListener("beforeunload", function(event) {
   window.localStorage.setItem("refreshed", "false");
   removeThisParticipantFromDatabase();
 });
@@ -149,3 +149,146 @@ window.addEventListener("beforeunload", function(event) {
 //participantManager.generateNewParticipant("05908960cb408e1af73a44ae0239c73a", false);
 //participantManager.generateNewParticipant("0eee33ee3ee3e3e33e3e3e3eee3e3e33", false);
 //participantManager.generateNewParticipant("1cee3ffffffffffffffffffeee3e3e33", false);
+
+
+/*
+    new TWEEN.Tween(camera.position)
+    .to({
+
+    }, 1000)
+    .easing(TWEEN.Easing.Quadratic.InOut)
+    .onComplete(() => {
+      console.log("Tweened!")
+
+      new TWEEN.Tween(time)
+      .to({t: 1}, 1000)
+      .onUpdate(() => {
+          THREE.Quaternion.slerp(startQuaternion, endQuaternion, camera.quaternion, time.t);
+      })
+      .easing(TWEEN.Easing.Quadratic.InOut).onComplete(() => {
+        exhibitItemOverlay.style.opacity = "100%";
+      })
+      .start();
+    }).start();
+    */
+
+/* Backendless API */
+
+/*
+const API_HOST = 'https://eu-api.backendless.com';
+const APP_ID = '45B6BB81-7AE1-BDD6-FF2B-68D2D53BF500';
+const API_KEY = 'C754572D-9FFC-4A9F-9E2B-01D66026EDC1';
+
+Backendless.serverURL = API_HOST;
+Backendless.initApp(APP_ID, API_KEY);
+
+const channel = Backendless.Messaging.subscribe('default');
+
+const onMessage = message => {
+  //console.log(message.message);
+  let participantObject = JSON.parse(message.message);
+
+  if (message.subtopic == "NEW PARTICIPANT"){
+
+    if (participantID != participantObject.id) {
+      participantManager.generateNewParticipant(participantObject.id, participantObject.hash, false);
+    }
+  }
+
+  if (message.subtopic == "PRESENT"){
+    if (participantManager.participantIsPresent(participantObject.id)){
+      participantManager.resetParticipantTimeToLive(participantObject.id);
+    } else {
+      participantManager.generateNewParticipant(participantObject.id, participantObject.hash, false);
+    }
+  }
+}
+
+setInterval(function sendPresenceSignal(){
+  let participantObject = {
+    "id": participantID,
+    "hash": participantHash
+  }
+
+  const request = Backendless.Messaging.publish('default', JSON.stringify(participantObject), {subtopic: "PRESENT"});
+}, 800),
+
+channel.addMessageListener(onMessage);
+*/
+
+/*
+function makeRandomParticipantID(length) {
+  let result = '';
+  const characters  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}*/
+
+/*
+	movePosition( position ) {
+
+		//console.log( this.model );
+
+		//		let action = animationMixer.clipAction( this.modelAnimations[ 0 ][ 0 ] );
+		// action.play();
+
+		// "The first parameter can be either an AnimationClip object or the name of an AnimationClip."
+		// https://threejs.org/docs/#api/en/animation/AnimationMixer.existingAction
+
+		//Man_Idle
+		//Man_Walk
+		//console.log( this.mixer );
+
+		//this.mixer.existingAction( this.modelAnimations[ 0 ][ 0 ] ).stop();
+
+		//this.mixer.existingAction( this.modelAnimations[ 0 ][ 5 ] ).play();
+
+
+		this.fadeToAnimationClip( this.modelAnimations[ 0 ][ 5 ] ); //Walking
+
+
+		//this.mixer.existingAction( this.modelAnimations[ 0 ][ 0 ] ).crossFadeTo( this.mixer.existingAction( this.modelAnimations[ 0 ][ 5 ] ), 500, true );
+
+		//this.mixer.stopAllAction();
+		//walkingAction.play();
+
+
+		new TWEEN.Tween( this.model.position )
+			.to( { x: position.x, y: position.y, z: position.z }, 3000 )
+			.easing( TWEEN.Easing.Quadratic.InOut )
+			.onComplete( () => {
+
+				this.fadeToAnimationClip( this.modelAnimations[ 0 ][ 0 ] ); //Idle
+
+				//this.mixer.stopAllAction();
+				//this.mixer.existingAction( this.modelAnimations[ 0 ][ 5 ] ).stop();
+				//this.mixer.existingAction( this.modelAnimations[ 0 ][ 0 ] ).play();
+				//walkingAction.crossFadeTo( passiveAction, 500, true );
+
+			} )
+			.start();
+
+		/*
+		new TWEEN.Tween( object.position )
+			.to({ x: target.position.x, y: target.position.y, z: target.position.z }, 3000 )
+					.onUpdate( function () {
+
+							positions[ index++ ] = this._valuesEnd.x;
+							positions[ index++ ] = this._valuesEnd.y;
+							positions[ index++ ] = this._valuesEnd.z;
+
+							currentMesh.geometry.attributes.position.needsUpdate = true;
+
+		}).start();
+*/
+
+/*
+
+		//Why do complicated maths when you can just lookAt things?
+		//let angleToFace = Math.atan2( this.position.z - position.z, this.position.x - position.x );
+		//angleToFace += Math.PI;
+
+*/

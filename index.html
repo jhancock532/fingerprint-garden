@@ -16,21 +16,38 @@
     <style>
       body, html {
         margin: 0;
+        height: 100%;
       }
       
-      #canvas-container {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: -1;
+      #canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      #information-overlay {
+        position: fixed;
+        z-index: 5;
+        background: rgba(0,0,0,0.6);
+        font-family: 'Courier New', Courier, monospace;
+        padding: 20px;
+        margin: 0;
+        border: 2px solid rgba(0,0,0,0.8);
+        color: white;
+        border-radius: 4px;
+        top: 40px;
+        left: 40px;
       }
     </style>
   </head>
   <body>
-    <button id="removeParticipantButton">Remove Participant</button>
-    <div id="canvas-container"></div>
+    <canvas id="canvas"></canvas>
+    <!--
+    <div id="canvas-container">
+      
+    </div>
+    -->
+    <div id="information-overlay">Last Visited<br>16 March 2021</div>
     <!--<script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>-->
     <script type="module" src="script.js"></script>
   </body>
