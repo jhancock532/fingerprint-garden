@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Online Together</title>
+    <title>Fingerprint Garden</title>
     <!-- Made with Three.js, using character models provided by Quaternius. -->
     <!-- Visit Quaternius's website at http://quaternius.com/ -->
+    <!-- I'm using Fingerprint.js for the fingerprinting, and Tween.js for some animations.-->
     <!-- This website uses the Backendless free plan for its database and server functions. -->
     <!-- It is a limited plan, so API requests & database storage can be depleted. -->
     <!-- Please don't abuse this API, unless 
@@ -25,6 +26,10 @@
         display: block;
       }
 
+      #fingerprint-image, #labyrinth-image {
+        display: none;
+      }
+
       #information-overlay {
         position: fixed;
         z-index: 5;
@@ -37,18 +42,15 @@
         border-radius: 4px;
         top: 40px;
         left: 40px;
+        display: none;
       }
     </style>
   </head>
   <body>
     <canvas id="canvas"></canvas>
-    <!--
-    <div id="canvas-container">
-      
-    </div>
-    -->
     <div id="information-overlay">Last Visited<br>16 March 2021</div>
-    <!--<script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>-->
+    <img id="fingerprint-image" src="/img/tiny-fingerprint.jpg" />
+    <img id="labyrinth-image" src="/img/tiny-labyrinth-print.jpg" />
     <script type="module" src="script.js"></script>
   </body>
 </html>

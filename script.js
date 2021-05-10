@@ -68,7 +68,7 @@ scene.background = new THREE.Color( 0xcce0ff );
 
 const participantManager = new Participant.Manager( scene );
 participantManager.loadAllModels();
-participantManager.loadGhostsFromDatabase();
+//participantManager.loadGhostsFromDatabase();
 
 setInterval( function manageGhostParticipants() {
 
@@ -140,11 +140,13 @@ scene.add( shadowHelper );
 */
 
 const platformGeometry = new THREE.CylinderGeometry( 6, 6, 1, 32 );
-const platformMaterial = new THREE.MeshStandardMaterial( { color: 0xffffff, roughness: 0.6, metalness: 0.8 } );
+const platformMaterial = new THREE.MeshStandardMaterial( { color: 0x005500, roughness: 0.8, metalness: 0.1 } );
 const platform = new THREE.Mesh( platformGeometry, platformMaterial );
 
+platform.name = "GROUND";
 platform.receiveShadow = true;
 platform.translateY( - 0.5 );
+platform.scale.set( 1.1, 1, 1.5 );
 
 scene.add( platform );
 
@@ -160,7 +162,6 @@ function onWindowResize() {
 	renderer.setSize( window.innerWidth, window.innerHeight );
 
 }
-
 
 function resizeRendererToDisplaySize( renderer ) {
 
@@ -183,13 +184,11 @@ function resizeRendererToDisplaySize( renderer ) {
 
 }
 
-
-
-/* Click to Find Object */
+/* Double click to walk */
 const raycaster = new THREE.Raycaster();
 let mouse = new THREE.Vector2();
 
-function onClick( event ) {
+function onDoubleClick( event ) {
 
 	event.preventDefault();
 
@@ -202,21 +201,20 @@ function onClick( event ) {
 
 	let intersects = raycaster.intersectObjects( scene.children, true );
 
-	if ( intersects.length > 0 ) {
+	for ( let i = 0; i < intersects.length; i ++ ) {
 
-		//console.log( intersects[ 0 ] );
+		if ( intersects[ i ].object.name == "GROUND" ) {
 
-		let destination = intersects[ 0 ].point;
+			let destination = intersects[ i ].point;
+			participantManager.moveVisitorParticipant( destination );
 
-		//console.log( destination );
-
-		participantManager.moveVisitorParticipant( destination );
+		}
 
 	}
 
 }
 
-renderer.domElement.addEventListener( 'dblclick', onClick, false );
+renderer.domElement.addEventListener( 'dblclick', onDoubleClick, false );
 
 //#endregion
 

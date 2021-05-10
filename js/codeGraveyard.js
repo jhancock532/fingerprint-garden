@@ -292,3 +292,62 @@ function makeRandomParticipantID(length) {
 		//angleToFace += Math.PI;
 
 */
+
+/*
+YASS RECURSIVE ALGORITHMS YASS
+
+	getValidGrassModelPosition() {
+
+		const position = new THREE.Vector3();
+
+		let size = 14;
+
+		position.x = Math.random() * size * 59 / 100 - ( size * 59 / 100 ) / 2;
+		position.y = 0;
+		position.z = Math.random() * size - size / 2;
+
+		if ( this.getFingerprintPixelBrightness( ( position.x + size / 2 ) * 59 / size, ( position.z + size / 2 ) * 100 / size ) < 0.5 ) {
+
+			return position;
+
+		} else {
+
+			return this.getValidGrassModelPosition();
+
+		}
+
+	}
+
+  //I stole the below code from the instance mesh example, it's a good introduction! if a bit weird with passing functions around...
+
+  		const randomizeMatrix = function () {
+
+			let position = new THREE.Vector3();
+			const rotation = new THREE.Euler();
+			const quaternion = new THREE.Quaternion();
+			const scale = new THREE.Vector3();
+
+			return ( matrix, that ) => {
+
+				//position.x = Math.random() * 10 - 5;
+			  //position.y = 0;
+				//position.z = Math.random() * 10 - 5;
+
+				position = that.getValidGrassModelPosition();
+				that.grassPositions.push( position );
+
+				rotation.x = 0;
+				rotation.y = Math.random() * 2 * Math.PI;
+				rotation.z = 0;
+
+				quaternion.setFromEuler( rotation );
+
+				scale.x = scale.y = scale.z = 1 + Math.random() * 1;
+
+				matrix.compose( position, quaternion, scale );
+
+			};
+
+		}();
+
+*/
