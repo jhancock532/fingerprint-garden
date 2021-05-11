@@ -31,14 +31,15 @@ class Participant {
 		this.modelAnimations = modelAnimations;
 
 		this.mixer = new THREE.AnimationMixer( mesh );
-		this.activeAction = this.mixer.clipAction( this.modelAnimations[ 0 ][ 0 ] ); //Man_Idle
-		this.mixer.clipAction( this.modelAnimations[ 0 ][ 5 ] ); //Man_Walk
-		this.mixer.clipAction( this.modelAnimations[ 0 ][ 3 ] ); //Man_Sitting //let sittingAnimationAction =
+		this.activeAction = this.mixer.clipAction( this.modelAnimations[ 0 ][ 0 ] ); //Idle
+		this.mixer.clipAction( this.modelAnimations[ 0 ][ 5 ] ); //Walk
+		this.mixer.clipAction( this.modelAnimations[ 0 ][ 3 ] ); //Sitting
 		this.activeAction.play();
 
 		this.previousAction;
 		this.moving = false;
 		this.sitting = false;
+		this.seatId = null;
 
 		this.rotation = Math.random() * Math.PI;
 		this.position = position;
@@ -56,6 +57,7 @@ class Participant {
 			hash: this.hash,
 			timeToLive: this.timeToLive,
 			position: this.position,
+			seatId: this.seatId,
 
 		} );
 
@@ -108,8 +110,10 @@ class Participant {
 				.easing( TWEEN.Easing.Quadratic.InOut )
 				.onComplete( () => {
 
-					this.fadeToAnimationClip( this.modelAnimations[ 0 ][ 3 ], 0.5 ); //Man sitting.
-					this.activeAction.halt( 8.0 ); //gradually slows animation to a stop, preventing sitting down animation looping.
+					this.fadeToAnimationClip( this.modelAnimations[ 0 ][ 3 ], 0.5 );
+
+					this.activeAction.halt( 8.0 );
+					//halt gradually slows animation to a stop, preventing sitting down animation looping.
 
 					this.moving = false;
 					this.sitting = true;
@@ -117,7 +121,6 @@ class Participant {
 				} ).start();
 
 		} );
-
 
 	}
 
@@ -141,6 +144,7 @@ class Participant {
 			this.moving = true;
 
 			//TODO: fix how odd this is
+			//https://gist.github.com/jhancock532/cea8ce753617bd704fb4ac2f5390bc91
 			const originalYRotation = this.model.rotation.y;
 			this.model.lookAt( position );
 			const newYRotation = this.model.rotation.y;
@@ -232,11 +236,12 @@ class Garden {
 
 		this.flowerModelURL = "models/garden/pressed-flowers.glb";
 		this.grassModelURL = "models/garden/GrassQuaternius.glb";
-		this.benchModelURL = "models/garden/bench.glb";
+		this.benchModelURL = "models/garden/benchtall.glb";
 
 		this.loader = new GLTFLoader();
 
 		this.GRASS_LAYOUT = "FINGERPRINT"; //"LABYRINTH"
+		//I've hidden this in the code as a nod to the Fingermaze of Hove Park.
 
 		this.modelMeshes = [];
 		this.flowerModel;
@@ -257,7 +262,25 @@ class Garden {
 
 	createGardenSeats() {
 
+		//Nearest right bench
 		this.seats.push( new Seat( this.scene, { x: 4.9, y: 1, z: 3 }, Math.PI * 3 / 2, 0 ) );
+		this.seats.push( new Seat( this.scene, { x: 4.9, y: 1, z: 1.5 }, Math.PI * 3 / 2, 1 ) );
+
+		//Farest right bench
+		this.seats.push( new Seat( this.scene, { x: 4.8, y: 1, z: - 3.7 }, Math.PI * 1.4, 2 ) );
+		this.seats.push( new Seat( this.scene, { x: 5.1, y: 1, z: - 2.3 }, Math.PI * 1.4, 3 ) );
+
+		//Nearest left bench
+		this.seats.push( new Seat( this.scene, { x: - 4.8, y: 1, z: 2.9 }, Math.PI * 0.6, 4 ) );
+		this.seats.push( new Seat( this.scene, { x: - 5.1, y: 1, z: 1.5 }, Math.PI * 0.5, 5 ) );
+
+		//Farest left bench
+		this.seats.push( new Seat( this.scene, { x: - 4.9, y: 1, z: - 3.5 }, Math.PI * 0.6, 6 ) );
+		this.seats.push( new Seat( this.scene, { x: - 4.95, y: 1, z: - 2.15 }, Math.PI * 0.55, 7 ) );
+
+		//Middle bench
+		this.seats.push( new Seat( this.scene, { x: - 0.6, y: 1, z: 7.6 }, Math.PI * 1, 8 ) );
+		this.seats.push( new Seat( this.scene, { x: 0.7, y: 1, z: 7.5 }, Math.PI * 1, 9 ) );
 
 	}
 
@@ -284,7 +307,7 @@ class Garden {
 		this.grassImageWidth = grassCanvas.width = grassImage.width;
 		this.grassImageHeight = grassCanvas.height = grassImage.height;
 
-		//console.log( grassCanvas.width, grassCanvas.height ); //59, 100 for tiny fingerprint, 114 121 for labyrinth print
+		//Image width and height is 59 & 100 for tiny fingerprint, 114 & 121 for labyrinth print
 
 		this.grassCanvasContext = grassCanvas.getContext( '2d' );
 		this.grassCanvasContext.drawImage( grassImage, 0, 0, grassImage.width, grassImage.height );
@@ -356,7 +379,7 @@ class Garden {
 
 		}
 
-		console.log( grassInstanceCount );
+		// console.log( grassInstanceCount ); TODO - optimize for mobile? research?
 
 		this.scene.add( this.grassInstanceMesh );
 
@@ -372,27 +395,27 @@ class Garden {
 		//benchMesh.castShadow = true;
 
 		const benchMeshOne = benchMesh.clone();
-		benchMeshOne.position.set( 5.6, 0.05, 2.1 );
+		benchMeshOne.position.set( 5.6, 0.15, 2.1 );
 		benchMeshOne.rotation.set( 0, 1.4, 0 );
 		this.scene.add( benchMeshOne );
 
 		const benchMeshTwo = benchMesh.clone();
-		benchMeshTwo.position.set( 5.6, 0.05, - 3.1 );
+		benchMeshTwo.position.set( 5.6, 0.15, - 3.1 );
 		benchMeshTwo.rotation.set( 0, 1.6, 0 );
 		this.scene.add( benchMeshTwo );
 
 		const benchMeshThree = benchMesh.clone();
-		benchMeshThree.position.set( - 5.6, 0.05, 2.1 );
+		benchMeshThree.position.set( - 5.6, 0.15, 2.1 );
 		benchMeshThree.rotation.set( 0, - 1.6, 0 );
 		this.scene.add( benchMeshThree );
 
 		const benchMeshFour = benchMesh.clone();
-		benchMeshFour.position.set( - 5.6, 0.05, - 3.1 );
+		benchMeshFour.position.set( - 5.6, 0.15, - 3.1 );
 		benchMeshFour.rotation.set( 0, - 1.9, 0 );
 		this.scene.add( benchMeshFour );
 
 		const benchMeshFive = benchMesh.clone();
-		benchMeshFive.position.set( 0.1, 0.05, 8.2 );
+		benchMeshFive.position.set( 0.1, 0.15, 8.2 );
 		benchMeshFive.rotation.set( 0, - 0.1, 0 );
 		this.scene.add( benchMeshFive );
 
@@ -568,8 +591,9 @@ class Seat {
 		this.scene = scene;
 		this.rotation = rotation;
 		this.sittingPosition = { x: position.x, y: position.y - 1, z: position.z };
+		this.isOccupied = false;
 
-		const size = 1;
+		const size = 1.2;
 		const geometry = new THREE.BoxGeometry( size, size, size );
 		const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
 		this.box = new THREE.Mesh( geometry, material );
@@ -671,13 +695,11 @@ export class Manager {
 
 			let participantObject = JSON.parse( messageData.message );
 
+			if ( participantObject.id == this.visitorParticipant.id ) return;
+
 			if ( messageData.subtopic == "NEW PARTICIPANT" ) {
 
-				if ( this.visitorParticipant.id != participantObject.id ) {
-
-					this.generateNewParticipant( participantObject.id, participantObject.hash, participantObject.position, false );
-
-				}
+				this.generateNewParticipant( participantObject.id, participantObject.hash, participantObject.position, false );
 
 			}
 
@@ -700,6 +722,15 @@ export class Manager {
 				if ( this.participantIsPresent( participantObject.id ) ) {
 
 					this.resetParticipantTimeToLive( participantObject.id );
+
+					if ( participantObject.seatId != null ) {
+
+						participantObject.sitting = false;
+						this.garden.getSeat( participantObject.seatId ).isOccupied = false;
+						participantObject.seatId = null;
+
+					}
+
 					this.moveParticipant( participantObject.id, participantObject.position );
 
 				} else {
@@ -710,11 +741,48 @@ export class Manager {
 
 			}
 
+			if ( messageData.subtopic == "SITTING" ) {
+
+				if ( this.participantIsPresent( participantObject.id ) ) {
+
+					this.resetParticipantTimeToLive( participantObject.id );
+
+					const seat = this.garden.seats[ participantObject.seatId ];
+
+					if ( seat.isOccupied == false ) {
+
+						seat.isOccupied = true;
+						this.sitParticipant( participantObject.id, seat );
+
+					}
+
+				} else {
+
+					this.generateNewParticipant( participantObject.id, participantObject.hash, participantObject.position, false );
+
+					const seat = this.garden.seats[ participantObject.seatId ];
+
+					if ( seat.isOccupied == false ) {
+
+						seat.isOccupied = true;
+						this.sitParticipant( participantObject.id, seat );
+
+					}
+
+				}
+
+			}
+
+			if ( messageData.subtopic == "SEAT LEFT" ) {
+
+				this.garden.seats[ participantObject.seatLeft ].isOccupied = false;
+
+			}
+
 		} );
 
 		setInterval( () => {
 
-			//console.log(JSON.stringify(this.visitorParticipant));
 			Backendless.Messaging.publish( 'default', this.visitorParticipant.toJSON(), { subtopic: "PRESENT" } );
 
 		}, 2000 );
@@ -850,8 +918,24 @@ export class Manager {
 
 	moveVisitorParticipant( position ) {
 
+		// If the current participant is sitting down
+		if ( this.visitorParticipant.seatId != null ) {
+
+			// Free the seat so that others can take it
+			Backendless.Messaging.publish( 'default', JSON.stringify( {
+				id: this.visitorParticipant.id,
+				seatLeft: this.visitorParticipant.seatId,
+			} ), { subtopic: "SEAT LEFT" } );
+
+			this.garden.seats[ this.visitorParticipant.seatId ].isOccupied = false;
+			this.visitorParticipant.seatId = null;
+
+		}
+
+		// Animate the change in position
 		this.visitorParticipant.movePosition( position, () => this.moving = false );
 
+		// Broadcast the position change and whether an occupied seat is now free
 		Backendless.Messaging.publish( 'default', this.visitorParticipant.toJSON(), { subtopic: "MOVED" } );
 
 	}
@@ -864,6 +948,15 @@ export class Manager {
 
 				//Important not to move the visitor participant twice, so check with id above.
 				//The twice moving is caused because I don't filter pub sub messages coming from source - todo?
+
+				//When moving the participant, free the seat.
+				if ( this.participants[ i ].seatId != null ) {
+
+					this.garden.seats[ this.participants[ i ].seatId ].isOccupied = false;
+					this.participants[ i ].seatId = null;
+
+				}
+
 				this.participants[ i ].movePosition( position, () => this.moving = false );
 
 			}
@@ -872,11 +965,60 @@ export class Manager {
 
 	}
 
-	sitVisitorParticipant( seat ) {
+	sitVisitorParticipant( seatId ) {
 
-		this.visitorParticipant.sitDown( seat );
+		if ( this.visitorParticipant.seatId == seatId ) return;
+		//Do nothing if visitor already sitting in selected seat.
 
-		//backendless pub sub message
+		const seat = this.garden.seats[ seatId ];
+
+		if ( seat.isOccupied == false ) {
+
+			// If the target seat isn't taken...
+
+			if ( this.visitorParticipant.seatId != null ) {
+
+				// If the participant is currently sitting in a seat, make it free.
+				this.garden.seats[ this.visitorParticipant.seatId ].isOccupied = false;
+
+				Backendless.Messaging.publish( 'default', JSON.stringify( {
+					id: this.visitorParticipant.id,
+					seatLeft: this.visitorParticipant.seatId,
+				} ), { subtopic: "SEAT LEFT" } );
+
+			}
+
+			// Take the target seat
+			this.visitorParticipant.seatId = seatId;
+			this.garden.seats[ seatId ].isOccupied = true;
+
+			// Run the sitting down animation
+			this.visitorParticipant.sitDown( seat );
+
+			// And broadcast to the group that the seat is taken
+			Backendless.Messaging.publish( 'default', this.visitorParticipant.toJSON(), { subtopic: "SITTING" } );
+
+		} else {
+
+			console.log( "TODO: Show a SEAT ALREADY TAKEN warning message!" );
+
+		}
+
+
+
+	}
+
+	sitParticipant( id, seat ) {
+
+		for ( let i = 0; i < this.participants.length; i ++ ) {
+
+			if ( this.participants[ i ].id == id && this.visitorParticipant.id != id ) {
+
+				this.participants[ i ].sitDown( seat );
+
+			}
+
+		}
 
 	}
 
@@ -1036,7 +1178,3 @@ export class Manager {
 	}
 
 }
-
-
-
-

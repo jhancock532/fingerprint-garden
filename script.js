@@ -69,7 +69,6 @@ class BackgroundGUIHelper {
 	}
 
 }
-//#endregion
 
 /* Fingerprint.js */
 ( async () => {
@@ -232,15 +231,15 @@ function onDoubleClick( event ) {
 
 			let destination = intersects[ i ].point;
 			participantManager.moveVisitorParticipant( destination );
+			break;
 
 		}
 
 		if ( intersects[ i ].object.name.substring( 0, 4 ) == "SEAT" ) {
 
 			const seatId = parseInt( intersects[ i ].object.name.substring( 5, 6 ) );
-			const seat = participantManager.garden.getSeat( seatId );
-
-			participantManager.sitVisitorParticipant( seat );
+			participantManager.sitVisitorParticipant( seatId );
+			break;
 
 		}
 
