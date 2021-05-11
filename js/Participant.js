@@ -33,11 +33,12 @@ class Participant {
 		this.mixer = new THREE.AnimationMixer( mesh );
 		this.activeAction = this.mixer.clipAction( this.modelAnimations[ 0 ][ 0 ] ); //Man_Idle
 		this.mixer.clipAction( this.modelAnimations[ 0 ][ 5 ] ); //Man_Walk
+		this.mixer.clipAction( this.modelAnimations[ 0 ][ 3 ] ); //Man_Sitting //let sittingAnimationAction =
 		this.activeAction.play();
 
-		//animationMixer.clipAction( this.modelAnimations[ 0 ][ 5 ] ); //Man_Walk
 		this.previousAction;
 		this.moving = false;
+		this.sitting = false;
 
 		this.rotation = Math.random() * Math.PI;
 		this.position = position;
@@ -98,7 +99,36 @@ class Participant {
 
 	}
 
-	movePosition( position ) {
+	sitDown( seat ) {
+
+		this.movePosition( seat.sittingPosition, () => {
+
+			new TWEEN.Tween( this.model.rotation )
+				.to( { y: seat.rotation }, 1000 )
+				.easing( TWEEN.Easing.Quadratic.InOut )
+				.onComplete( () => {
+
+					this.fadeToAnimationClip( this.modelAnimations[ 0 ][ 3 ], 0.5 ); //Man sitting.
+					this.activeAction.halt( 8.0 ); //gradually slows animation to a stop, preventing sitting down animation looping.
+
+					this.moving = false;
+					this.sitting = true;
+
+				} ).start();
+
+		} );
+
+
+	}
+
+	movePosition( position, onFinish ) {
+
+		//onFinish is a callback function that is executed when the animation has finished.
+		//I'm using it in this codebase for chaining sequences of animations,
+		//  To denote the end of an animation use
+		//    () => this.moving = false
+		//  as the callback function.
+		//The lambda function makes the this.moving local
 
 		// "The first parameter can be either an AnimationClip object or the name of an AnimationClip."
 		// https://threejs.org/docs/#api/en/animation/AnimationMixer.existingAction
@@ -136,6 +166,7 @@ class Participant {
 
 							this.fadeToAnimationClip( this.modelAnimations[ 0 ][ 0 ], 0.5 ); //Idle
 							this.moving = false; //could have another 0.5 wait here for the fade
+							onFinish();
 
 						} )
 						.start();
@@ -217,7 +248,30 @@ class Garden {
 
 		this.loadedModels = false;
 
+		this.seats = [];
+		this.createGardenSeats();
+
 		this.createGrassCanvasContext();
+
+	}
+
+	createGardenSeats() {
+
+		this.seats.push( new Seat( this.scene, { x: 4.9, y: 1, z: 3 }, Math.PI * 3 / 2, 0 ) );
+
+	}
+
+	getSeat( id ) {
+
+		if ( id < 10 ) {
+
+			return this.seats[ id ];
+
+		} else {
+
+			throw Error( "This seat doesn't exist!" );
+
+		}
 
 	}
 
@@ -312,15 +366,35 @@ class Garden {
 
 		const scale = 3;
 
-		let benchMesh = this.benchModel.scene.clone();
-
-		benchMesh.position.set( 5.8, 0.1, 1 );
-		benchMesh.rotation.set( 0, 1.3, 0 );
-
+		const benchMesh = this.benchModel.scene.clone();
 		benchMesh.scale.set( scale, scale, scale );
-		benchMesh.receiveShadow = true;
-		benchMesh.castShadow = true;
-		this.scene.add( benchMesh );
+		//benchMesh.receiveShadow = true;
+		//benchMesh.castShadow = true;
+
+		const benchMeshOne = benchMesh.clone();
+		benchMeshOne.position.set( 5.6, 0.05, 2.1 );
+		benchMeshOne.rotation.set( 0, 1.4, 0 );
+		this.scene.add( benchMeshOne );
+
+		const benchMeshTwo = benchMesh.clone();
+		benchMeshTwo.position.set( 5.6, 0.05, - 3.1 );
+		benchMeshTwo.rotation.set( 0, 1.6, 0 );
+		this.scene.add( benchMeshTwo );
+
+		const benchMeshThree = benchMesh.clone();
+		benchMeshThree.position.set( - 5.6, 0.05, 2.1 );
+		benchMeshThree.rotation.set( 0, - 1.6, 0 );
+		this.scene.add( benchMeshThree );
+
+		const benchMeshFour = benchMesh.clone();
+		benchMeshFour.position.set( - 5.6, 0.05, - 3.1 );
+		benchMeshFour.rotation.set( 0, - 1.9, 0 );
+		this.scene.add( benchMeshFour );
+
+		const benchMeshFive = benchMesh.clone();
+		benchMeshFive.position.set( 0.1, 0.05, 8.2 );
+		benchMeshFive.rotation.set( 0, - 0.1, 0 );
+		this.scene.add( benchMeshFive );
 
 	}
 
@@ -404,19 +478,6 @@ class Garden {
 
 	}
 
-	addFlowers() {
-
-		let scale = 0;
-
-		let flowerMesh = this.flowerModel.scene.clone();
-
-		flowerMesh.position.set( 0, 0, 0 );
-
-		flowerMesh.scale.set( scale, scale, scale );
-		this.scene.add( flowerMesh );
-
-	}
-
 	async loadGardenModels() {
 
 		this.flowerModel = await this.loadModel( this.flowerModelURL );
@@ -495,6 +556,29 @@ class Garden {
 			);
 
 		} );
+
+	}
+
+}
+
+class Seat {
+
+	constructor( scene, position, rotation, id ) {
+
+		this.scene = scene;
+		this.rotation = rotation;
+		this.sittingPosition = { x: position.x, y: position.y - 1, z: position.z };
+
+		const size = 1;
+		const geometry = new THREE.BoxGeometry( size, size, size );
+		const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+		this.box = new THREE.Mesh( geometry, material );
+
+		this.box.name = `SEAT-${id}`;
+		this.box.position.set( position.x, position.y, position.z );
+		this.box.visible = false;
+
+		this.scene.add( this.box );
 
 	}
 
@@ -766,7 +850,7 @@ export class Manager {
 
 	moveVisitorParticipant( position ) {
 
-		this.visitorParticipant.movePosition( position );
+		this.visitorParticipant.movePosition( position, () => this.moving = false );
 
 		Backendless.Messaging.publish( 'default', this.visitorParticipant.toJSON(), { subtopic: "MOVED" } );
 
@@ -779,11 +863,20 @@ export class Manager {
 			if ( this.participants[ i ].id == id && this.visitorParticipant.id != id ) {
 
 				//Important not to move the visitor participant twice, so check with id above.
-				this.participants[ i ].movePosition( position );
+				//The twice moving is caused because I don't filter pub sub messages coming from source - todo?
+				this.participants[ i ].movePosition( position, () => this.moving = false );
 
 			}
 
 		}
+
+	}
+
+	sitVisitorParticipant( seat ) {
+
+		this.visitorParticipant.sitDown( seat );
+
+		//backendless pub sub message
 
 	}
 

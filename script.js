@@ -47,6 +47,28 @@ class ColorGUIHelper {
 	}
 
 }
+
+class BackgroundGUIHelper {
+
+	constructor( background ) {
+
+		this.background = background;
+
+	}
+
+	get value() {
+
+		return `#${this.background.getHexString()}`;
+
+	}
+
+	set value( hexString ) {
+
+		this.background.set( hexString );
+
+	}
+
+}
 //#endregion
 
 /* Fingerprint.js */
@@ -64,6 +86,8 @@ class ColorGUIHelper {
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color( 0xcce0ff );
+gui.addColor( new BackgroundGUIHelper( scene.background, ), 'value' ).name( 'Background' );
+
 //scene.fog = new THREE.Fog( 0xcce0ff, 500, 10000 );
 
 const participantManager = new Participant.Manager( scene );
@@ -113,6 +137,7 @@ const sunLight = new THREE.DirectionalLight( sunColor, sunIntensity );
 sunLight.position.set( 0, 20, 40 );
 sunLight.target.position.set( 0, 0, 0 );
 
+
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.width = 512;
 sunLight.shadow.mapSize.height = 512;
@@ -139,7 +164,7 @@ const shadowHelper = new THREE.CameraHelper( sunLight.shadow.camera );
 scene.add( shadowHelper );
 */
 
-const platformGeometry = new THREE.CylinderGeometry( 6, 6, 1, 32 );
+const platformGeometry = new THREE.CylinderBufferGeometry( 6, 6, 1, 32 );
 const platformMaterial = new THREE.MeshStandardMaterial( { color: 0x005500, roughness: 0.8, metalness: 0.1 } );
 const platform = new THREE.Mesh( platformGeometry, platformMaterial );
 
@@ -207,6 +232,15 @@ function onDoubleClick( event ) {
 
 			let destination = intersects[ i ].point;
 			participantManager.moveVisitorParticipant( destination );
+
+		}
+
+		if ( intersects[ i ].object.name.substring( 0, 4 ) == "SEAT" ) {
+
+			const seatId = parseInt( intersects[ i ].object.name.substring( 5, 6 ) );
+			const seat = participantManager.garden.getSeat( seatId );
+
+			participantManager.sitVisitorParticipant( seat );
 
 		}
 

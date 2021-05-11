@@ -350,4 +350,17 @@ YASS RECURSIVE ALGORITHMS YASS
 
 		}();
 
+
+  addFlowers() {
+
+		let scale = 0;
+
+		let flowerMesh = this.flowerModel.scene.clone();
+
+		flowerMesh.position.set( 0, 0, 0 );
+
+		flowerMesh.scale.set( scale, scale, scale );
+		this.scene.add( flowerMesh );
+
+	}
 */
