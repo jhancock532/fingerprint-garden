@@ -3,18 +3,21 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import * as dat from 'dat.gui';
 import Stats from 'stats.js';
-import * as Participant from './js/Participant.js';
+import * as FingerprintGarden from './js/FingerprintGarden.js';
 import 'tocca';
 
 let fingerprintHash;
 let fingerprintHashLoaded = false;
 let loading = true;
 
+const TIME_BETWEEN_GHOST_UPDATES = 30000;
+
 let aboutInformationDisplayed = false;
 
 const loadingSplashElement = document.getElementById( "loading-splash" );
 const aboutButtonElement = document.getElementById( "about-button" );
 const aboutInformationElement = document.getElementById( "about-information" );
+const informationOverlayElement = document.getElementById( "information-overlay" );
 
 aboutButtonElement.addEventListener( "click", ( e ) => {
 
@@ -31,6 +34,7 @@ aboutButtonElement.addEventListener( "click", ( e ) => {
 		aboutInformationElement.style.opacity = 1;
 		aboutInformationElement.style.pointerEvents = "initial";
 		aboutButtonElement.innerText = "Go Back to the Garden";
+		informationOverlayElement.style.display = "none";
 
 	}
 
@@ -38,23 +42,34 @@ aboutButtonElement.addEventListener( "click", ( e ) => {
 
 } );
 
-const TIME_BETWEEN_GHOST_UPDATES = 30000;
-
-//#region Stats and GUI
-/* Stats.js */
-var stats = new Stats();
+const stats = new Stats();
 stats.showPanel( 0 );
+stats.dom.style.opacity = 0;
+stats.dom.style.transition = "opacity 1s ease";
 document.body.appendChild( stats.dom );
-
-/* dat.GUI */
-//let params = {
-
-//};
 
 const gui = new dat.GUI();
 dat.GUI.toggleHide();
 
-//lightingFolder.add(params, "movementSpeed", 0, 100).name("Speed");
+const guiParams = {
+
+	toggleStatsDisplay: function () {
+
+		if ( stats.dom.style.opacity == 0 ) {
+
+			stats.dom.style.opacity = 1;
+
+		} else {
+
+			stats.dom.style.opacity = 0;
+
+		}
+
+	}
+
+};
+
+gui.add( guiParams, "toggleStatsDisplay" ).name( "Show FPS Statistics" );
 
 class ColorGUIHelper {
 
@@ -114,35 +129,28 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color( 0xcce0ff );
 gui.addColor( new BackgroundGUIHelper( scene.background, ), 'value' ).name( 'Background' );
 
-//scene.fog = new THREE.Fog( 0xcce0ff, 500, 10000 );
+scene.fog = new THREE.Fog( 0xcce0ff, 10, 100 );
 
-const participantManager = new Participant.Manager( scene );
-participantManager.loadAllModels();
-//participantManager.loadGhostsFromDatabase();
-
+const sceneManager = new FingerprintGarden.Manager( scene );
+sceneManager.loadAllModels();
 
 setInterval( function manageGhostParticipants() {
 
 	if ( loading == false ) {
 
-		participantManager.updateGhosts();
+		sceneManager.updateGhosts();
 
 	}
 
 }, TIME_BETWEEN_GHOST_UPDATES );
 
-//#region THREE.js
 
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 100 );
 camera.position.z = 8;
 camera.position.y = 5;
 
 const canvas = document.getElementById( 'canvas' );
 const renderer = new THREE.WebGLRenderer( { canvas } );
-
-renderer.shadowMap.enabled = true;
-//renderer.setSize( window.innerWidth, window.innerHeight );
-
 const clock = new THREE.Clock();
 
 const controls = new OrbitControls( camera, renderer.domElement );
@@ -165,6 +173,8 @@ sunLight.position.set( 0, 20, 40 );
 sunLight.target.position.set( 0, 0, 0 );
 
 /*
+//Shadows aren't great for performance, so I've cut them.
+
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.width = 512;
 sunLight.shadow.mapSize.height = 512;
@@ -201,7 +211,6 @@ const platformEdgeMaterial = new THREE.MeshStandardMaterial( { color: 0x555555, 
 const platformEdge = new THREE.Mesh( platformEdgeGeometry, platformEdgeMaterial );
 
 platform.name = "GROUND";
-//platform.receiveShadow = true;
 platform.translateY( - 0.5 );
 platform.scale.set( 1.1, 1, 1.5 );
 
@@ -212,7 +221,6 @@ platformEdge.scale.set( 1.1, 1, 1.5 );
 scene.add( platform );
 scene.add( platformEdge );
 
-/* Resize the Window */
 window.addEventListener( 'resize', onWindowResize );
 
 function onWindowResize() {
@@ -228,6 +236,7 @@ function resizeRendererToDisplaySize( renderer ) {
 
 	// Resizing code taken from
 	// https://threejsfundamentals.org/threejs/lessons/threejs-responsive.html
+	// the best solution I've found
 
 	const canvas = renderer.domElement;
 	const width = canvas.clientWidth;
@@ -245,20 +254,24 @@ function resizeRendererToDisplaySize( renderer ) {
 
 }
 
-/* Double click to walk */
 const raycaster = new THREE.Raycaster();
 let mouse = new THREE.Vector2();
 
 function onDoubleClick( event ) {
 
+	informationOverlayElement.style.opacity = 0;
+
 	event.preventDefault();
 
-	mouse.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
-	mouse.y = - ( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;
+	if ( event.x == null ) event.x = event.clientX;
+	if ( event.y == null ) event.y = event.clientY;
+
+	//using .x and .y here instead of .clientX and .clientY because tocca gives .x and .y
+
+	mouse.x = ( event.x / renderer.domElement.clientWidth ) * 2 - 1;
+	mouse.y = - ( event.y / renderer.domElement.clientHeight ) * 2 + 1;
 
 	raycaster.setFromCamera( mouse, camera );
-
-	//raycaster.setFromCamera( { x: 0, y: 0 }, camera );
 
 	let intersects = raycaster.intersectObjects( scene.children, true );
 
@@ -271,7 +284,7 @@ function onDoubleClick( event ) {
 		if ( intersects[ i ].object.name == "GROUND" ) {
 
 			let destination = intersects[ i ].point;
-			participantManager.moveVisitorParticipant( destination );
+			sceneManager.moveVisitorParticipant( destination );
 			break;
 
 		}
@@ -279,7 +292,7 @@ function onDoubleClick( event ) {
 		if ( intersects[ i ].object.name.substring( 0, 4 ) == "SEAT" ) {
 
 			const seatId = parseInt( intersects[ i ].object.name.substring( 5, 6 ) );
-			participantManager.sitVisitorParticipant( seatId );
+			sceneManager.sitVisitorParticipant( seatId );
 			break;
 
 		}
@@ -288,30 +301,31 @@ function onDoubleClick( event ) {
 
 }
 
-renderer.domElement.addEventListener( 'dblclick', onDoubleClick, false );
-renderer.domElement.addEventListener( 'dbltap', onDoubleClick, false ); //provided by Tocca
+//renderer.domElement.addEventListener( 'dblclick', onDoubleClick, false );
+// This event is not necessary with below listener
 
-//#endregion
+renderer.domElement.addEventListener( 'dbltap', onDoubleClick, false );
+// dbltap is provided by Tocca.js
 
-/* Animation */
 const animate = function () {
 
 	stats.begin();
 
-	if ( fingerprintHashLoaded && participantManager.loadedModels && participantManager.loadedGhosts && loading ) {
+	if ( fingerprintHashLoaded && sceneManager.loadedModels && sceneManager.loadedGhosts && loading ) {
 
 		loading = false;
 
-		participantManager.initialiseVisitorParticipant( fingerprintHash );
-		participantManager.initialiseGhosts();
-		participantManager.initialiseSocketMessages();
+		sceneManager.initialiseVisitorParticipant( fingerprintHash );
+		sceneManager.initialiseGhosts();
+		sceneManager.initialiseSocketMessages();
 
 		loadingSplashElement.style.opacity = 0;
 		aboutButtonElement.style.opacity = "100%";
+		informationOverlayElement.style.opacity = "100%";
 
 		setInterval( () => {
 
-			participantManager.switchLiveCameraFeed();
+			sceneManager.switchLiveCameraFeed();
 
 		}, 10000 );
 
@@ -321,9 +335,9 @@ const animate = function () {
 
 	if ( loading == false ) {
 
-		participantManager.updateMixers( delta );
-		participantManager.updateParticipantsTimeToLive( delta );
-		participantManager.updateSecuritySystem( renderer );
+		sceneManager.updateMixers( delta );
+		sceneManager.updateParticipantsTimeToLive( delta );
+		sceneManager.updateSecuritySystem( renderer );
 
 	}
 
