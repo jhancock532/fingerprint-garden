@@ -4,10 +4,39 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import * as dat from 'dat.gui';
 import Stats from 'stats.js';
 import * as Participant from './js/Participant.js';
+import 'tocca';
 
 let fingerprintHash;
 let fingerprintHashLoaded = false;
 let loading = true;
+
+let aboutInformationDisplayed = false;
+
+const loadingSplashElement = document.getElementById( "loading-splash" );
+const aboutButtonElement = document.getElementById( "about-button" );
+const aboutInformationElement = document.getElementById( "about-information" );
+
+aboutButtonElement.addEventListener( "click", ( e ) => {
+
+	e.preventDefault();
+
+	if ( aboutInformationDisplayed ) {
+
+		aboutInformationElement.style.opacity = 0;
+		aboutInformationElement.style.pointerEvents = "none";
+		aboutButtonElement.innerText = "About this Website";
+
+	} else {
+
+		aboutInformationElement.style.opacity = 1;
+		aboutInformationElement.style.pointerEvents = "initial";
+		aboutButtonElement.innerText = "Go Back to the Garden";
+
+	}
+
+	aboutInformationDisplayed = ! aboutInformationDisplayed;
+
+} );
 
 const TIME_BETWEEN_GHOST_UPDATES = 30000;
 
@@ -81,8 +110,6 @@ class BackgroundGUIHelper {
 } )();
 
 /* Three.js */
-//const canvasContainer = document.getElementById( 'canvas-container' );
-
 const scene = new THREE.Scene();
 scene.background = new THREE.Color( 0xcce0ff );
 gui.addColor( new BackgroundGUIHelper( scene.background, ), 'value' ).name( 'Background' );
@@ -92,6 +119,7 @@ gui.addColor( new BackgroundGUIHelper( scene.background, ), 'value' ).name( 'Bac
 const participantManager = new Participant.Manager( scene );
 participantManager.loadAllModels();
 //participantManager.loadGhostsFromDatabase();
+
 
 setInterval( function manageGhostParticipants() {
 
@@ -136,7 +164,7 @@ const sunLight = new THREE.DirectionalLight( sunColor, sunIntensity );
 sunLight.position.set( 0, 20, 40 );
 sunLight.target.position.set( 0, 0, 0 );
 
-
+/*
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.width = 512;
 sunLight.shadow.mapSize.height = 512;
@@ -149,6 +177,7 @@ sunLight.shadow.camera.near = 40;
 sunLight.shadow.camera.far = 50;
 sunLight.shadow.bias = - 0.01; //Important! Used to prevent moire effects
 //sunLight.shadow.normalBias = 0.00001;
+*/
 
 gui.addColor( new ColorGUIHelper( sunLight, 'color' ), 'value' ).name( 'Directional Light' );
 gui.add( sunLight, 'intensity', 0, 2, 0.01 ).name( "Directional Intensity" );
@@ -167,13 +196,21 @@ const platformGeometry = new THREE.CylinderBufferGeometry( 6, 6, 1, 32 );
 const platformMaterial = new THREE.MeshStandardMaterial( { color: 0x005500, roughness: 0.8, metalness: 0.1 } );
 const platform = new THREE.Mesh( platformGeometry, platformMaterial );
 
+const platformEdgeGeometry = new THREE.CylinderBufferGeometry( 6.1, 6.1, 1, 32 );
+const platformEdgeMaterial = new THREE.MeshStandardMaterial( { color: 0x555555, roughness: 0.9, metalness: 0.1 } );
+const platformEdge = new THREE.Mesh( platformEdgeGeometry, platformEdgeMaterial );
+
 platform.name = "GROUND";
-platform.receiveShadow = true;
+//platform.receiveShadow = true;
 platform.translateY( - 0.5 );
 platform.scale.set( 1.1, 1, 1.5 );
 
-scene.add( platform );
+platformEdge.name = "PLATFORM-EDGE";
+platformEdge.translateY( - 0.51 );
+platformEdge.scale.set( 1.1, 1, 1.5 );
 
+scene.add( platform );
+scene.add( platformEdge );
 
 /* Resize the Window */
 window.addEventListener( 'resize', onWindowResize );
@@ -227,6 +264,10 @@ function onDoubleClick( event ) {
 
 	for ( let i = 0; i < intersects.length; i ++ ) {
 
+		if ( intersects[ i ].object.name == "PLATFORM-EDGE" ) break;
+		if ( intersects[ i ].object.name == "CAMERA_TOWER_BASE" ) break;
+		if ( intersects[ i ].object.name == "SCREEN_STAND" ) break;
+
 		if ( intersects[ i ].object.name == "GROUND" ) {
 
 			let destination = intersects[ i ].point;
@@ -248,6 +289,7 @@ function onDoubleClick( event ) {
 }
 
 renderer.domElement.addEventListener( 'dblclick', onDoubleClick, false );
+renderer.domElement.addEventListener( 'dbltap', onDoubleClick, false ); //provided by Tocca
 
 //#endregion
 
@@ -264,6 +306,15 @@ const animate = function () {
 		participantManager.initialiseGhosts();
 		participantManager.initialiseSocketMessages();
 
+		loadingSplashElement.style.opacity = 0;
+		aboutButtonElement.style.opacity = "100%";
+
+		setInterval( () => {
+
+			participantManager.switchLiveCameraFeed();
+
+		}, 10000 );
+
 	}
 
 	let delta = clock.getDelta();
@@ -272,6 +323,7 @@ const animate = function () {
 
 		participantManager.updateMixers( delta );
 		participantManager.updateParticipantsTimeToLive( delta );
+		participantManager.updateSecuritySystem( renderer );
 
 	}
 

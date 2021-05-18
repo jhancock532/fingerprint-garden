@@ -19,7 +19,6 @@ const LENGTH_OF_RANDOM_PARTICIPANT_ID = 16;
 
 let hashPosition = 1; //global for recursive mesh traverse
 
-
 class Participant {
 
 	constructor( id, hash, mesh, position, timeToLive, modelAnimations ) {
@@ -105,8 +104,18 @@ class Participant {
 
 		this.movePosition( seat.sittingPosition, () => {
 
-			new TWEEN.Tween( this.model.rotation )
-				.to( { y: seat.rotation }, 1000 )
+			const quaternionTime = { t: 0 };
+			const startQuaternion = this.model.quaternion.clone();
+			const endQuaternion = new THREE.Quaternion();
+			endQuaternion.setFromAxisAngle( new THREE.Vector3( 0, 1, 0 ), seat.rotation );
+
+			new TWEEN.Tween( quaternionTime )
+				.to( { t: 1 }, 1000 )
+				.onUpdate( () => {
+
+					THREE.Quaternion.slerp( startQuaternion, endQuaternion, this.model.quaternion, quaternionTime.t );
+
+				} )
 				.easing( TWEEN.Easing.Quadratic.InOut )
 				.onComplete( () => {
 
@@ -131,24 +140,42 @@ class Participant {
 		//  To denote the end of an animation use
 		//    () => this.moving = false
 		//  as the callback function.
-		//The lambda function makes the this.moving local
+		//The lambda function makes the this.moving local scope :)
 
 		// "The first parameter can be either an AnimationClip object or the name of an AnimationClip."
 		// https://threejs.org/docs/#api/en/animation/AnimationMixer.existingAction
-		// Sadly I can't get this to work :/
-
-		position = new THREE.Vector3( position.x, position.y, position.z );
+		// Sadly I can't get animation clip names to work :/ (TODO - raise issue?)
 
 		if ( this.moving === false ) {
 
 			this.moving = true;
 
-			//TODO: fix how odd this is
+			if ( this.sitting ) {
+
+				this.fadeToAnimationClip( this.modelAnimations[ 0 ][ 0 ], 0.5 ); //Idle
+				this.sitting = false;
+
+				setTimeout( () => {
+
+					this.moving = false;
+					this.movePosition( position, onFinish );
+
+				}, 500 );
+
+				return;
+
+			}
+
+			position = new THREE.Vector3( position.x, position.y, position.z );
+
+			//Thank you James, this quaternion gist is super handy
 			//https://gist.github.com/jhancock532/cea8ce753617bd704fb4ac2f5390bc91
-			const originalYRotation = this.model.rotation.y;
+			//obama-awarding-obama-meme.jpg
+
+			const quaternionTime = { t: 0 };
+			const startQuaternion = this.model.quaternion.clone();
 			this.model.lookAt( position );
-			const newYRotation = this.model.rotation.y;
-			this.model.rotation.y = originalYRotation;
+			const endQuaternion = this.model.quaternion.clone();
 
 			const distanceToTravel = position.distanceTo( this.position );
 			const timeToTravel = distanceToTravel * 1000 * 0.5; //2m per second
@@ -156,8 +183,13 @@ class Participant {
 			this.position = position;
 			//do this before animation so the new position gets sent correctly in moveVisitorParticipant()
 
-			new TWEEN.Tween( this.model.rotation )
-				.to( { y: newYRotation }, 1000 )
+			new TWEEN.Tween( quaternionTime )
+				.to( { t: 1 }, 1000 )
+				.onUpdate( () => {
+
+					THREE.Quaternion.slerp( startQuaternion, endQuaternion, this.model.quaternion, quaternionTime.t );
+
+				} )
 				.easing( TWEEN.Easing.Quadratic.InOut )
 				.onComplete( () => {
 
@@ -234,22 +266,29 @@ class Garden {
 
 	constructor( scene ) {
 
+		//There are more effiecent ways of loading models, this is a potential optimisation.
+		//I'm not too worried about loading times though.
+
 		this.flowerModelURL = "models/garden/pressed-flowers.glb";
 		this.grassModelURL = "models/garden/GrassQuaternius.glb";
 		this.benchModelURL = "models/garden/benchtall.glb";
+		this.cameraModelURL = "models/garden/camera.glb";
 
 		this.loader = new GLTFLoader();
 
 		this.GRASS_LAYOUT = "FINGERPRINT"; //"LABYRINTH"
 		//I've hidden this in the code as a nod to the Fingermaze of Hove Park.
+		//If you like what I've made and want to send a tip, donate via labyrinth.tez (Tezoz Wallet URL)
 
 		this.modelMeshes = [];
 		this.flowerModel;
 		this.grassModel;
+		this.cameraModel;
 		this.grassInstanceMesh;
 		this.scene = scene;
 
 		this.flowerPositions = [];
+		this.cameraTowers = [];
 
 		this.loadedModels = false;
 
@@ -284,20 +323,6 @@ class Garden {
 
 	}
 
-	getSeat( id ) {
-
-		if ( id < 10 ) {
-
-			return this.seats[ id ];
-
-		} else {
-
-			throw Error( "This seat doesn't exist!" );
-
-		}
-
-	}
-
 	createGrassCanvasContext() {
 
 		let imageID = ( this.GRASS_LAYOUT == "FINGERPRINT" ) ? "fingerprint-image" : "labyrinth-image";
@@ -316,7 +341,7 @@ class Garden {
 
 	getGrassPixelBrightness( x, y ) {
 
-		const pixelData = this.grassCanvasContext.getImageData( x, y, 1, 1 ).data; //[r, g, b, a]
+		const pixelData = this.grassCanvasContext.getImageData( x, y, 1, 1 ).data; //returns in format [r, g, b, a]
 
 		return ( ( pixelData[ 0 ] + pixelData[ 1 ] + pixelData[ 2 ] ) / 3 ) / 255;
 		//https://stackoverflow.com/questions/8751020/how-to-get-a-pixels-x-y-coordinate-color-from-an-image
@@ -421,6 +446,34 @@ class Garden {
 
 	}
 
+	addCameraTowers() {
+
+		//This is an experiemental and awkward way of coding
+		//Introducing the "push directly to array and pass entire context to child because I like working with classes"
+		//Although this is kinda what I've done for the Seat objects anyway... hmmm
+
+		this.cameraTowers.push( new CameraTower( new THREE.Vector3( 4.2, 0, 6.1 ), this.cameraModel.scene.clone(), this.scene ) );
+		this.cameraTowers.push( new CameraTower( new THREE.Vector3( 6, 0, - 0.5 ), this.cameraModel.scene.clone(), this.scene ) );
+		this.cameraTowers.push( new CameraTower( new THREE.Vector3( - 4.2, 0, 6.1 ), this.cameraModel.scene.clone(), this.scene ) );
+		this.cameraTowers.push( new CameraTower( new THREE.Vector3( - 6, 0, - 0.5 ), this.cameraModel.scene.clone(), this.scene ) );
+
+	}
+
+	pointCameraAtParticipant( cameraID, participant ) {
+
+		if ( cameraID == null ) return;
+
+		const footPosition = participant.model.position;
+		//Not .position! .model.position tracks the participant accurately while they are walking.
+		const headPosition = new THREE.Vector3( footPosition.x, footPosition.y + 1.9, footPosition.z );
+
+		this.cameraTowers[ 0 ].cameraMesh.lookAt( headPosition );
+		this.cameraTowers[ 1 ].cameraMesh.lookAt( headPosition );
+		this.cameraTowers[ 2 ].cameraMesh.lookAt( headPosition );
+		this.cameraTowers[ 3 ].cameraMesh.lookAt( headPosition );
+
+	}
+
 	shuffleFlowerPositions() {
 
 		//https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
@@ -506,9 +559,11 @@ class Garden {
 		this.flowerModel = await this.loadModel( this.flowerModelURL );
 		this.grassModel = await this.loadModel( this.grassModelURL );
 		this.benchModel = await this.loadModel( this.benchModelURL );
+		this.cameraModel = await this.loadModel( this.cameraModelURL );
 
 		this.addGrassInstances();
 		this.addBenches();
+		this.addCameraTowers();
 
 		this.loadedModels = true;
 
@@ -584,6 +639,48 @@ class Garden {
 
 }
 
+class CameraTower {
+
+	constructor( position, cameraMesh, scene ) {
+
+		this.position = position; //base of the tower
+		this.cameraPosition = new THREE.Vector3( position.x, position.y + 4, position.z );
+		this.cameraMesh = cameraMesh;
+
+		this.addCameraTowerToScene( scene );
+
+	}
+
+	addCameraTowerToScene( scene ) {
+
+		const BASE_RADIUS = 0.3;
+		const POLE_RADIUS = 0.08;
+		const TOWER_HEIGHT = 4;
+
+		const towerBaseGeometry = new THREE.CylinderBufferGeometry( BASE_RADIUS, BASE_RADIUS, 2, 8 );
+		const towerStandMaterial = new THREE.MeshStandardMaterial( { color: 0xcccccc, roughness: 0.5, metalness: 0.8 } );
+		const towerBase = new THREE.Mesh( towerBaseGeometry, towerStandMaterial );
+		towerBase.name = "CAMERA_TOWER_BASE";
+
+		//Less typing? Trying to set position of a read only element without .setPosition(x, y, z)
+		//https://stackoverflow.com/questions/14223249/how-can-i-set-the-position-of-a-mesh-before-i-add-it-to-the-scene-in-three-js
+		Object.assign( towerBase.position, this.position );
+		scene.add( towerBase );
+
+		const towerPoleGeometry = new THREE.CylinderBufferGeometry( POLE_RADIUS, POLE_RADIUS, TOWER_HEIGHT, 4 );
+		const towerPole = new THREE.Mesh( towerPoleGeometry, towerStandMaterial );
+
+		towerPole.position.set( this.position.x, this.position.y + TOWER_HEIGHT / 2, this.position.z );
+		scene.add( towerPole );
+
+		Object.assign( this.cameraMesh.position, this.cameraPosition );
+		this.cameraMesh.scale.set( 0.2, 0.2, 0.2 ); //This is comically large but that kinda works...
+		scene.add( this.cameraMesh );
+
+	}
+
+}
+
 class Seat {
 
 	constructor( scene, position, rotation, id ) {
@@ -608,6 +705,163 @@ class Seat {
 
 }
 
+class ObserverCamera {
+
+	constructor( scene ) {
+
+		this.scene = scene;
+
+		//Following the render target tutorial at
+		//https://threejsfundamentals.org/threejs/lessons/threejs-rendertargets.html
+
+		const rtWidth = 400, rtHeight = 300;
+		const rtFov = 60, rtAspect = rtWidth / rtHeight;
+		const rtNear = 1, rtFar = 25;
+
+		this.activeCameraID = null;
+
+		this.securityCamera = new THREE.PerspectiveCamera( rtFov, rtAspect, rtNear, rtFar );
+		this.securityCamera.position.set( 0, 3, 4 );
+		this.securityCamera.rotateX( - 1.4 );
+
+		this.renderTarget = new THREE.WebGLRenderTarget( rtWidth, rtHeight );
+
+		this.addDisplayToScene();
+
+	}
+
+	addHeart( position, rotation, scale ) {
+
+		//This heart shape is joinked from the the below blog
+		//http://blog.cjgammon.com/threejs-geometry
+		//Who stole it from the Three.js docs, I think
+		const heartShape = new THREE.Shape();
+
+		heartShape.moveTo( 5, 5 );
+		heartShape.bezierCurveTo( 5, 5, 4, 0, 0, 0 );
+		heartShape.bezierCurveTo( - 6, 0, - 6, 7, - 6, 7 );
+		heartShape.bezierCurveTo( - 6, 11, - 5, 15.4, 5, 19 );
+		heartShape.bezierCurveTo( 12, 15.4, 16, 11, 16, 7 );
+		heartShape.bezierCurveTo( 16, 7, 16, 0, 10, 0 );
+		heartShape.bezierCurveTo( 7, 0, 5, 5, 5, 5 );
+
+		const heartGeometry = new THREE.ExtrudeGeometry( heartShape, {
+			depth: 2,
+			bevelEnabled: false,
+			bevelSegments: 2,
+			steps: 2,
+			bevelSize: 2,
+			bevelThickness: 1
+		} );
+
+		const heartMesh = new THREE.Mesh( heartGeometry, new THREE.MeshPhongMaterial( { color: 0xaa22aa } ) );
+
+		heartMesh.scale.set( scale, - scale, scale );
+		Object.assign( heartMesh.position, position );
+		heartMesh.rotateZ( rotation );
+
+		this.scene.add( heartMesh );
+
+	}
+
+	addDisplayDecorations() {
+
+		const fontLoader = new THREE.FontLoader();
+
+		fontLoader.load( 'fonts/Itim_Regular_Subset.json', ( font ) => {
+
+			const textGeometry = new THREE.TextGeometry( 'You are being followed', {
+				font: font,
+				size: 0.6,
+				height: 0.2,
+				curveSegments: 12,
+				bevelEnabled: false,
+				bevelThickness: 10,
+				bevelSize: 8,
+				bevelOffset: 0,
+				bevelSegments: 5
+			} );
+
+			const textMaterial = new THREE.MeshStandardMaterial( { color: 0xaa22aa, roughness: 0.9, metalness: 0.2 } );
+			const textMesh = new THREE.Mesh( textGeometry, textMaterial );
+			textMesh.position.set( - 4.0, 5, - 8.5 );
+
+			this.scene.add( textMesh );
+
+		} );
+
+		this.addHeart( new THREE.Vector3( - 2.2, 4.5, - 8.4 ), - 0.5, 0.04 );
+		this.addHeart( new THREE.Vector3( 2, 4.4, - 8.4 ), 0.5, 0.04 );
+		this.addHeart( new THREE.Vector3( 1.8, 4.9, - 8.4 ), - 0.5, 0.025 );
+		this.addHeart( new THREE.Vector3( - 2.0, 4.8, - 8.4 ), 0.5, 0.025 );
+
+	}
+
+	addDisplayToScene() {
+
+		const screenContainerGeometry = new THREE.BoxBufferGeometry( 5.4, 4.1, 0.2 );
+		const screenContainerMaterial = new THREE.MeshStandardMaterial( { color: 0xcccccc, roughness: 0.5, metalness: 0.8 } );
+		const screenContainerMesh = new THREE.Mesh( screenContainerGeometry, screenContainerMaterial );
+
+		screenContainerMesh.position.set( 0, 3, - 8.61 );
+		this.scene.add( screenContainerMesh );
+
+		const screenStandGeometry = new THREE.BoxBufferGeometry( 4.0, 1.5, 1.1 );
+		const screenStandMesh = new THREE.Mesh( screenStandGeometry, screenContainerMaterial );
+
+		screenStandMesh.name = "SCREEN_STAND";
+		screenStandMesh.position.set( 0, - 0.25, - 8.61 );
+		this.scene.add( screenStandMesh );
+
+		const screenPoleGeometry = new THREE.CylinderBufferGeometry( 0.09, 0.09, 2, 4 );
+		const screenPoleMesh = new THREE.Mesh( screenPoleGeometry, screenContainerMaterial );
+		screenPoleMesh.position.set( 0, 1, - 8.6 );
+		this.scene.add( screenPoleMesh );
+
+		const securityCameraScreenGeometry = new THREE.PlaneBufferGeometry( 5, 3.75 );
+		const securityCameraScreenMaterial = new THREE.MeshPhongMaterial( {
+
+			map: this.renderTarget.texture,
+			color: new THREE.Color( 0x7777aa ),
+			side: THREE.DoubleSide,
+
+		} );
+
+		const securityCameraScreen = new THREE.Mesh( securityCameraScreenGeometry, securityCameraScreenMaterial );
+
+		securityCameraScreen.position.set( 0, 3, - 8.5 );
+		this.scene.add( securityCameraScreen );
+
+		this.addDisplayDecorations();
+
+	}
+
+	lookAtParticipant( participant ) {
+
+		const footPosition = participant.model.position;
+		//Not .position! .model.position tracks the participant accurately while they are walking.
+		const headPosition = new THREE.Vector3( footPosition.x, footPosition.y + 1.8, footPosition.z );
+		const distanceToCamera = this.securityCamera.position.distanceTo( headPosition );
+		let cameraFOV = 30 - distanceToCamera * 1.5;
+
+		if ( cameraFOV < 8 ) cameraFOV = 8;
+
+		this.securityCamera.fov = cameraFOV;
+		this.securityCamera.updateProjectionMatrix();
+		this.securityCamera.lookAt( headPosition );
+
+	}
+
+	render( renderer ) {
+
+		renderer.setRenderTarget( this.renderTarget );
+		renderer.render( this.scene, this.securityCamera );
+		renderer.setRenderTarget( null );
+
+	}
+
+}
+
 export class Manager {
 
 	constructor( scene ) {
@@ -615,6 +869,7 @@ export class Manager {
 		this.visitorParticipant;
 
 		this.garden = new Garden( scene );
+		this.observerCamera = new ObserverCamera( scene );
 
 		this.participants = [];
 		this.ghosts = [];
@@ -726,7 +981,7 @@ export class Manager {
 					if ( participantObject.seatId != null ) {
 
 						participantObject.sitting = false;
-						this.garden.getSeat( participantObject.seatId ).isOccupied = false;
+						this.garden.seats[ participantObject.seatId ].isOccupied = false;
 						participantObject.seatId = null;
 
 					}
@@ -876,6 +1131,38 @@ export class Manager {
 				this.addRandomGhost();
 
 			}
+
+		}
+
+	}
+
+	updateSecuritySystem( renderer ) {
+
+		if ( this.observerCamera.activeCameraID == null ) {
+
+			const cameraTowerPosition = this.garden.cameraTowers[ 0 ].cameraPosition;
+
+			this.observerCamera.securityCamera.position.set( cameraTowerPosition.x, cameraTowerPosition.y, cameraTowerPosition.z );
+			this.observerCamera.activeCameraID = 0;
+
+		}
+
+		this.garden.pointCameraAtParticipant( this.observerCamera.activeCameraID, this.visitorParticipant );
+		this.observerCamera.lookAtParticipant( this.visitorParticipant );
+		this.observerCamera.render( renderer );
+
+	}
+
+	switchLiveCameraFeed() {
+
+		if ( this.garden.loadedModels ) {
+
+			const newCameraID = ( this.observerCamera.activeCameraID + 1 ) % 4;
+			const cameraTowerPosition = this.garden.cameraTowers[ newCameraID ].cameraPosition;
+
+			this.observerCamera.securityCamera.position.set( cameraTowerPosition.x, cameraTowerPosition.y, cameraTowerPosition.z );
+			this.observerCamera.activeCameraID = newCameraID;
+			this.observerCamera.lookAtParticipant( this.visitorParticipant );
 
 		}
 
