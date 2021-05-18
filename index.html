@@ -4,6 +4,7 @@
     <title>Fingerprint Garden</title>
     <!-- Made with Three.js, using character models provided by Quaternius. -->
     <!-- Visit Quaternius's website at http://quaternius.com/ -->
+    <!-- Additional models provided via Google Poly, see the about section for credits.-->
     <!-- I'm using Fingerprint.js for the fingerprinting, and Tween.js for some animations.-->
     <!-- This website uses the Backendless free plan for its database and server functions. -->
     <!-- It is a limited plan, so API requests & database storage can be depleted. -->
@@ -33,22 +34,199 @@
       #information-overlay {
         position: fixed;
         z-index: 5;
-        background: rgba(0,0,0,0.6);
+        background: rgba(0,0,0,0.9);
         font-family: 'Courier New', Courier, monospace;
         padding: 20px;
         margin: 0;
-        border: 2px solid rgba(0,0,0,0.8);
+        border: 2px solid rgba(0,0,0,0.9);
         color: white;
         border-radius: 4px;
         top: 40px;
         left: 40px;
         display: none;
       }
+
+      #loading-splash {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        background-color: rgba(0,0,0,0.9);
+        color: white;
+        font-family: Consolas, 'Courier New', Courier, monospace;
+        font-size: 1.3rem;
+        word-wrap: break-word; /*necessary with <wbr>?*/
+        opacity: 100%;
+        pointer-events: none;
+        transition: opacity 3s ease;
+      }
+
+      #about-button {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        color: white;
+        font-family: Consolas, 'Courier New', Courier, monospace;
+        background-color: rgba(0,0,0,0.9);
+        padding: 8px 10px 10px;
+        text-decoration: underline;
+        font-size: 19px;
+        cursor: pointer;
+        border-top: 2px solid white;
+        border-left: 2px solid white;
+        border-right: 2px solid white;
+        opacity: 0;
+        transition: opacity 1s ease;
+        transition-delay: 3s;
+        z-index: 10;
+        user-select: none;
+      }
+
+      #about-information {
+        position: fixed;
+        top: 0;
+        left: 0;
+        opacity: 0%;
+        transition: opacity 1s ease;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        pointer-events: none;
+        background-color: rgba(0,0,0,0.9);
+        color: white;
+        font-family: Consolas, 'Courier New', Courier, monospace;
+        overflow-y: scroll;
+      }
+
+      #about-content-column {
+        max-width: 80ch;
+        padding-top: 80px;
+      }
+
+      #about-content-column p {
+        font-size: 19px;
+        line-height: 130%;
+      }
+
+      #about-content-column a {
+        color: white;
+      }
+
+      #mobile-controls {
+        display: none;
+      }
+
+      #desktop-controls {
+        display: initial;
+      }
+
+      h1, h2 {
+        text-align: center;
+      }
+
+      @media only screen and (max-width: 750px) {
+        #about-content-column {
+          max-width: 80ch;
+          padding: 40px 20px;
+        }
+
+        #about-content-column p {
+          font-size: 17px;
+        }
+
+        #about-button {
+          font-size: initial;
+          width: max-content;
+        }
+
+        #mobile-controls {
+          display: initial;
+        }
+
+        #desktop-controls {
+          display: none;
+        }
+      }
     </style>
   </head>
   <body>
     <canvas id="canvas"></canvas>
-    <div id="information-overlay">Last Visited<br>16 March 2021</div>
+    <div id="loading-splash">
+      <p>Welcome to</p>
+      <h1 style="text-align: center;">Fingerprint<wbr>.Garden</h1>
+      <!--I've yoinked this <wbr> from this Stackoverflow answer - https://stackoverflow.com/questions/24488950/css-to-break-a-line-only-on-a-certain-character
+      But I remember hearing of it from Robin Sloan's source code, as well as some other ancient tutorials.-->
+      <p>NOW LOADING...</p>
+    </div>
+    <div id="about-button">About This Website</div>
+    <div id="about-information">
+      <div id="about-left-column"></div>
+      <div id="about-content-column">
+        <h1>fingerprint<wbr>.garden</h1>
+        <p>
+          This website explores how we watch and are watched on social media and the Web 2.0. Distracted by
+          cute design and entertaining content, we remain unaware of how much information we are sharing
+          with international advertising companies, how closely they follow our mouse movements, how intimately
+          they know our histories. The garden juxtaposes social media, bringing the constant surviellance of the 
+          Web 2.0 out of the shadows and into the spotlight.
+        </p>
+        <p>
+          Browser fingerprinting involves collecting information about your device that 
+          can be used to uniquely identify and track you across multiple websites, without cookies.
+          To see what information can be gathered, <a href="https://amiunique.org/fp" target="_blank">take a test on amiunique.org</a>.
+          This website harvests the browser fingerprint of every participant that visits it,
+          adding a unique flower to the garden based on their fingerprint data. The website
+          is networked to other devices in real time, with each device represented as a character 
+          model textured depending on their fingerprint. Ghostly transparent characters are devices 
+          that have visited the site in the past, now held in the server database. These models aim 
+          to show the uniqueness of our browser fingerprints in a network context, which is what makes this 
+          data so useful for tracking individuals across the web.
+        </p>
+        <h2>Controls</h2>
+        <p id="desktop-controls">
+          Use the left mouse button to rotate the camera, the right mouse button to track, 
+          and the scrollwheel to zoom. You can double click anywhere on the ground to move your fingerprint 
+          character about the garden, and you can double click on a bench to sit down.
+        </p>
+        <p id="mobile-controls">
+          Touch and move to rotate the camera, use two fingers to track, 
+          and pinch in and out to zoom. You can double tap anywhere on the ground to move your fingerprint 
+          character about the garden, and you can double tap on a bench to sit down.
+        </p>
+        <h2>Development</h2>
+        <p>
+          Made with Three.js for 3D modelling, fingerprint.js for browser fingerprinting and Tween.js for animations.
+          The server and API of this website is hosted using the free Backendless Springboard development plan, 
+          and website is hosted and published via Cloudflare Pages.
+        </p>
+        <h2>Credits</h2>
+        <p>
+          I am using character models provided by <a href="https://quaternius.com/">Quaternius</a> (CC-0), 
+          Flower models are provided by <a href="https://poly.google.com/user/b7jif2AAit5">Alex "SAFFY" Safayan</a> (CC-BY), 
+          the garden bench model is by <a href="https://poly.google.com/user/bYnsas3dlFq">Frank Lynam</a> (CC-BY),
+          and the grass tuft model was another Quaternius asset (CC-0).
+        </p>
+        <p>
+          Created by James Hancock as part of a Masters degree in Digital Media Art.
+          My personal website is <a href="jameshancock.art">jameshancock.art</a>,
+          you can get in touch with me via its <a href="https://jameshancock.art/contact/">contact form</a>, 
+          you can also find me on Twitter <a href="https://twitter.com/jhancock532">@jhancock532</a>.
+        </p>
+        <br><br><br>
+      </div>
+      <div id="about-left-column"></div>
+    </div>
+    <!--
+      TODO - Show overlay on hover?
+      <div id="information-overlay">Last Visited<br>16 March 2021</div>
+    -->
     <img id="fingerprint-image" src="/img/tiny-fingerprint.jpg" />
     <img id="labyrinth-image" src="/img/tiny-labyrinth-print.jpg" />
     <script type="module" src="script.js"></script>
