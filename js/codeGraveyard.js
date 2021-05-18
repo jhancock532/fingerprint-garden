@@ -363,4 +363,52 @@ YASS RECURSIVE ALGORITHMS YASS
 		this.scene.add( flowerMesh );
 
 	}
+
+  	loadGrassInstance( x, y ) {
+
+		let scale = 1 + Math.random() * 3;
+
+		let grassTuftMesh = this.grassModel.scene.clone();
+
+		grassTuftMesh.traverse( function ( child ) {
+
+			if ( child.isMesh ) {
+
+				child.material = child.material.clone();
+
+				child.material.type = "MeshBasicMaterial";
+				child.material.flatShading = true;
+				child.material.needsUpdate = true;
+
+				child.material.color = {
+					r: Math.random() * 0.6,
+					g: 0.8 + Math.random() * 0.2,
+					b: 0 };
+
+				//No need for fancy materials, grass looks flat anyway.
+				//The subtle variation in material colours is good enough.
+
+				child.material.type = "MeshStandardMaterial";
+
+				child.material.flatShading = true;
+				child.material.needsUpdate = true;
+
+				child.material.metalness = Math.random() * 0.1;
+				child.material.roughness = 0.8 + Math.random() * 0.2;
+				child.material.color = {
+					r: Math.random() * 0.6,
+					g: 0.8 + Math.random() * 0.2,
+					b: 0 };
+
+			}
+
+		} );
+
+		grassTuftMesh.position.set( x, 0, y );
+
+		grassTuftMesh.scale.set( scale, scale, scale );
+		this.scene.add( grassTuftMesh );
+
+	}
+
 */

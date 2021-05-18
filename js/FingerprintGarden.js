@@ -13,7 +13,7 @@ const TIME_TO_LIVE = 3000; //1000 milliseconds = 1 second
 const SPAWN_DIAMETER = 10;
 const GHOST_FADE_IN = 4000;
 const GHOST_FADE_OUT = 2000;
-const DEBUG_MODE = true;
+const DEBUG_MODE = false;
 
 const LENGTH_OF_RANDOM_PARTICIPANT_ID = 16;
 
@@ -352,7 +352,9 @@ class Garden {
 
 		const matrix = new THREE.Matrix4();
 
-		const grassInstanceMaterial = new THREE.MeshStandardMaterial( { color: 0x44ff00, roughness: 0.6, metalness: 0.1 } );
+		//const grassInstanceMaterial = new THREE.MeshStandardMaterial( { color: 0x44ff00, roughness: 0.6, metalness: 0.1 } );
+		const grassInstanceMaterial = new THREE.MeshPhongMaterial( { color: 0x33ee00 } );
+		//Not as nice, but slight performance benefits. Ideally, test and verify.
 		const maxGrassInstances = ( this.GRASS_LAYOUT == "FINGERPRINT" ) ? 1867 : 1317; // 1327 uses a max of 2439 with the smaller fingerprint image.
 		this.grassInstanceMesh = new InstancedMesh( this.grassModel.scene.children[ 0 ].geometry, grassInstanceMaterial, maxGrassInstances );
 
@@ -566,44 +568,6 @@ class Garden {
 		this.addCameraTowers();
 
 		this.loadedModels = true;
-
-	}
-
-	loadGrassInstance( x, y ) {
-
-		let scale = 1 + Math.random() * 3;
-
-		let grassTuftMesh = this.grassModel.scene.clone();
-
-		grassTuftMesh.traverse( function ( child ) {
-
-			if ( child.isMesh ) {
-
-				child.castShadow = true;
-				child.receiveShadow = true;
-
-				child.material = child.material.clone();
-
-				child.material.type = "MeshStandardMaterial";
-
-				child.material.flatShading = true;
-				child.material.needsUpdate = true;
-
-				child.material.metalness = Math.random() * 0.1;
-				child.material.roughness = 0.8 + Math.random() * 0.2;
-				child.material.color = {
-					r: Math.random() * 0.6,
-					g: 0.8 + Math.random() * 0.2,
-					b: 0 };
-
-			}
-
-		} );
-
-		grassTuftMesh.position.set( x, 0, y );
-
-		grassTuftMesh.scale.set( scale, scale, scale );
-		this.scene.add( grassTuftMesh );
 
 	}
 
