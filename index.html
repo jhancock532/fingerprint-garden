@@ -2,10 +2,7 @@
 <html>
   <head>
     <title>Fingerprint Garden</title>
-    <!-- Made with Three.js, using character models provided by Quaternius. -->
-    <!-- Visit Quaternius's website at http://quaternius.com/ -->
-    <!-- Additional models provided via Google Poly, see the about section for credits.-->
-    <!-- I'm using Fingerprint.js for the fingerprinting, and Tween.js for some animations.-->
+    <!-- Made with Three.js, Tween.js, Tocca and Backendless -->
     <!-- This website uses the Backendless free plan for its database and server functions. -->
     <!-- It is a limited plan, so API requests & database storage can be depleted. -->
     <!-- Please don't abuse this API, unless 
@@ -91,6 +88,18 @@
         user-select: none;
       }
 
+      #go-back-gradient {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9;
+        bottom: 0;
+        left: 0;
+        opacity: 0%;
+        width: 100%;
+        height: 20%;
+        background-image: linear-gradient(transparent, black 70%);
+      }
+
       #about-information {
         position: fixed;
         top: 0;
@@ -126,11 +135,11 @@
         color: white;
       }
 
-      #mobile-controls {
+      .show-on-mobile {
         display: none;
       }
 
-      #desktop-controls {
+      .show-on-desktop {
         display: initial;
       }
 
@@ -152,11 +161,11 @@
           width: max-content;
         }
 
-        #mobile-controls {
+        .show-on-mobile {
           display: initial;
         }
 
-        #desktop-controls {
+        .show-on-desktop {
           display: none;
         }
       }
@@ -172,51 +181,54 @@
       <p>NOW LOADING...</p>
     </div>
     <div id="about-button">About This Website</div>
+    <div id="go-back-gradient"></div>
     <div id="about-information">
       <div id="about-left-column"></div>
       <div id="about-content-column">
         <h1>About</h1>
         <p>
           This website critiques how we are tracked on social media and across the modern web. Distracted by
-          cute design and entertaining content, we are lulled unaware of how much information we are sharing
+          cute design and entertaining content, we forget how much information we are sharing
           with international advertising companies, how closely they follow our mouse movements, how intimately
           they know our histories.
           <br><br>
         </p>
         <h2>Fingerprints</h2>
         <p>
-          Browser fingerprinting involves collecting information about your device that 
-          can be used to uniquely identify and track you across multiple websites, without cookies.
-          To see what information can be gathered, <a href="https://amiunique.org/fp" target="_blank">take a test on amiunique.org</a>.
+          Browser fingerprints collect information about browsers that 
+          can be used to uniquely identify and track individuals between different websites, without using cookies.
+          To see what information can be gathered, <a href="https://amiunique.org/fp" target="_blank">try taking a fingerprint test on amiunique.org</a>.
         </p>
         <p>
-          This website harvests the browser fingerprint of every participant that visits it,
+          This website gathers the browser fingerprint of every participant that visits it,
           adding a unique flower to the garden based on their fingerprint data. The website
           is networked to other devices in real time, with each device represented as a character 
-          model textured depending on their fingerprint. Ghostly transparent characters are devices 
-          that have visited the site in the past, now held in the server database. These vibrant 3D models 
-          show the uniqueness of our browser fingerprints, all living in a context of constant surveillance.
+          model textured depending on their fingerprint. The transparent characters are the fingerprints of devices 
+          that have visited the site in the past, now held in the garden as ghosts. These vibrant 3D models 
+          show the uniqueness of our browser fingerprints, their fleeting presence in the garden forming a networked intimacy.
+          <br><br>
         </p>
         <h2>Controls</h2>
-        <p id="desktop-controls">
+        <p class="show-on-desktop">
           Use the left mouse button to rotate the camera, the right mouse button to track, 
           and the scrollwheel to zoom. Double click anywhere on the ground to move the fingerprint 
           character about the garden, double click on an empty bench to sit down.
           <br><br>
         </p>
-        <p id="mobile-controls">
+        <p class="show-on-mobile">
           Touch and move to rotate the camera, use two fingers to track, 
           and pinch in and out to zoom. Double tap anywhere on the ground to move the fingerprint 
           character about the garden, double tap on an empty bench to sit down.
           <br><br>
         </p>
+        <!--
         <h2>Development</h2>
         <p>
           Made with Three.js for 3D modelling, fingerprint.js for browser fingerprinting and Tween.js for animations.
           The server and API of this website is hosted using the free Backendless Springboard development plan, 
-          and website is hosted and published via Cloudflare Pages.
-          <br><br>
+          and website is hosted and published via Cloudflare Pages.<br><br>
         </p>
+        -->
         <h2>Credits</h2>
         <p>
           Made using character models provided by <a href="https://quaternius.com/">Quaternius</a> (CC-0), 
@@ -227,15 +239,15 @@
         <p>
           Created by James Hancock as part of a Masters degree in Digital Media Art.
           My personal website is <a href="jameshancock.art">jameshancock.art</a>,
-          you can get in touch with me via its <a href="https://jameshancock.art/contact/">contact form</a>, 
-          you can also find me on Twitter <a href="https://twitter.com/jhancock532">@jhancock532</a>.
+          please get in touch via its <a href="https://jameshancock.art/contact/">contact form</a>, 
+          or find me on Twitter <a href="https://twitter.com/jhancock532">@jhancock532</a>.
         </p>
-        <br><br><br>
+        <br><br><br><br><br><br>
       </div>
       <div id="about-left-column"></div>
     </div>
     
-    <div id="information-overlay">Double Click / Tap to Walk</div>
+    <div id="information-overlay">Double <span class="show-on-desktop">Click</span><span class="show-on-mobile">Tap</span> to Walk</div>
     
     <img id="fingerprint-image" src="/img/tiny-fingerprint.jpg" />
     <img id="labyrinth-image" src="/img/tiny-labyrinth-print.jpg" />

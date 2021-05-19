@@ -18,6 +18,7 @@ const loadingSplashElement = document.getElementById( "loading-splash" );
 const aboutButtonElement = document.getElementById( "about-button" );
 const aboutInformationElement = document.getElementById( "about-information" );
 const informationOverlayElement = document.getElementById( "information-overlay" );
+const goBackGradientElement = document.getElementById( "go-back-gradient" );
 
 aboutButtonElement.addEventListener( "click", ( e ) => {
 
@@ -26,14 +27,20 @@ aboutButtonElement.addEventListener( "click", ( e ) => {
 	if ( aboutInformationDisplayed ) {
 
 		aboutInformationElement.style.opacity = 0;
+		goBackGradientElement.style.opacity = 0;
 		aboutInformationElement.style.pointerEvents = "none";
+		aboutButtonElement.style.color = "white";
+		aboutButtonElement.style.background = "rgba(0,0,0,0.9)";
 		aboutButtonElement.innerText = "About this Website";
 
 	} else {
 
 		aboutInformationElement.style.opacity = 1;
+		goBackGradientElement.style.opacity = 1;
 		aboutInformationElement.style.pointerEvents = "initial";
 		aboutButtonElement.innerText = "Go Back to the Garden";
+		aboutButtonElement.style.color = "black";
+		aboutButtonElement.style.background = "white";
 		informationOverlayElement.style.display = "none";
 
 	}
@@ -155,7 +162,7 @@ const clock = new THREE.Clock();
 
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.maxPolarAngle = Math.PI * 0.45;
-controls.minDistance = 5;
+controls.minDistance = 0; //Thanks Sam for the feedback, was 5, now user can zoom in closer.
 controls.maxDistance = 20;
 
 const color = 0xFFFFFF;
