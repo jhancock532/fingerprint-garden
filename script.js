@@ -13,12 +13,48 @@ let loading = true;
 const TIME_BETWEEN_GHOST_UPDATES = 30000;
 
 let aboutInformationDisplayed = false;
+let sideWindowDisplayed = false;
 
 const loadingSplashElement = document.getElementById( "loading-splash" );
 const aboutButtonElement = document.getElementById( "about-button" );
 const aboutInformationElement = document.getElementById( "about-information" );
 const informationOverlayElement = document.getElementById( "information-overlay" );
 const goBackGradientElement = document.getElementById( "go-back-gradient" );
+
+const sideWindow = document.getElementById( "side-window" );
+const sideWindowTitle = document.getElementById( "side-window-title" );
+const sideWindowHash = document.getElementById( "side-window-hash" );
+const sideWindowStatus = document.getElementById( "side-window-status" );
+const sideWindowDate = document.getElementById( "side-window-date" );
+const sideWindowLastConnected = document.getElementById( "side-window-last-connected" );
+const sideWindowToggleButton = document.getElementById( "side-window-toggle-button" );
+
+function toggleSideWindow() {
+
+	if ( sideWindowDisplayed ) {
+
+		sideWindow.style.display = "none";
+		sideWindowToggleButton.innerText = "Show Information 🠗";
+
+	} else {
+
+		sideWindow.style.display = "block";
+		sideWindow.style.opacity = 1;
+		sideWindowToggleButton.innerText = "Hide Information 🠕";
+
+	}
+
+	sideWindowDisplayed = ! sideWindowDisplayed;
+
+}
+
+sideWindowToggleButton.addEventListener( "click", ( e ) => {
+
+	e.preventDefault();
+
+	toggleSideWindow();
+
+} );
 
 aboutButtonElement.addEventListener( "click", ( e ) => {
 
@@ -138,7 +174,13 @@ gui.addColor( new BackgroundGUIHelper( scene.background, ), 'value' ).name( 'Bac
 
 scene.fog = new THREE.Fog( 0xcce0ff, 10, 100 );
 
-const sceneManager = new FingerprintGarden.Manager( scene );
+const canvas = document.getElementById( 'canvas' );
+const itemViewCanvas = document.getElementById( 'item-view-canvas' );
+itemViewCanvas.width = 200;
+itemViewCanvas.height = 200;
+const renderer = new THREE.WebGLRenderer( { canvas } );
+
+const sceneManager = new FingerprintGarden.Manager( scene, renderer, itemViewCanvas.getContext( "2d" ) );
 sceneManager.loadAllModels();
 
 setInterval( function manageGhostParticipants() {
@@ -156,8 +198,7 @@ const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.inner
 camera.position.z = 8;
 camera.position.y = 5;
 
-const canvas = document.getElementById( 'canvas' );
-const renderer = new THREE.WebGLRenderer( { canvas } );
+
 const clock = new THREE.Clock();
 
 const controls = new OrbitControls( camera, renderer.domElement );
@@ -261,12 +302,157 @@ function resizeRendererToDisplaySize( renderer ) {
 
 }
 
+function getDateString( date ) {
+
+	const dateOutput = `${ date.getDate() }/${ date.getMonth() + 1 }/${ date.getFullYear() }`;
+	return dateOutput;
+
+}
+
+function getTimeString( date ) {
+
+	let hours = `${ date.getHours() }`;
+	if ( hours.length == 1 ) hours = "0" + hours;
+
+	let minutes = `${ date.getMinutes() }`;
+	if ( minutes.length == 1 ) minutes = "0" + minutes;
+
+	let seconds = `${ date.getSeconds() }`;
+	if ( seconds.length == 1 ) seconds = "0" + seconds;
+
+	return hours + ":" + minutes + ":" + seconds;
+
+}
+
 const raycaster = new THREE.Raycaster();
-let mouse = new THREE.Vector2();
+const mouse = new THREE.Vector2();
+
+function onClick( event ) {
+
+	event.preventDefault();
+
+	if ( event.x == null ) event.x = event.clientX;
+	if ( event.y == null ) event.y = event.clientY;
+
+	//using .x and .y here instead of .clientX and .clientY because tocca gives .x and .y
+
+	mouse.x = ( event.x / renderer.domElement.clientWidth ) * 2 - 1;
+	mouse.y = - ( event.y / renderer.domElement.clientHeight ) * 2 + 1;
+
+	raycaster.setFromCamera( mouse, camera );
+
+	let intersects = raycaster.intersectObjects( scene.children, true );
+
+	for ( let i = 0; i < intersects.length; i ++ ) {
+
+		if ( intersects[ i ].object.name == "PLATFORM-EDGE" ) break;
+		if ( intersects[ i ].object.name == "CAMERA_TOWER_BASE" ) break;
+		if ( intersects[ i ].object.name == "SCREEN_STAND" ) break;
+
+		if ( intersects[ i ].object.name == "FLOWER" ) {
+
+			const hash = intersects[ i ].object.hash;
+
+			sideWindowTitle.innerText = "PREVIOUS PARTICIPANT";
+			sideWindowHash.innerHTML = hash.substring( 0, 16 ) + "<br>" + hash.substring( 16, 32 );
+			sideWindowStatus.innerHTML = "FLOWER";
+			sideWindowStatus.classList.remove( "live-dot" );
+			sideWindowLastConnected.style.display = "block";
+
+			const connectionStatus = sceneManager.getConnectionStatusFromHash( hash );
+
+			const connectionDate = new Date( connectionStatus );
+			const dateOutput = getDateString( connectionDate );
+			const timeOutput = getTimeString( connectionDate );
+
+			sideWindowDate.innerHTML = dateOutput + "<br>" + timeOutput;
+
+			sceneManager.takeSnapshotOfFlower( intersects[ i ] );
+			onWindowResize();
+
+			break;
+
+		}
+
+		if ( intersects[ i ].object.type == "SkinnedMesh" ) {
+
+			const hash = intersects[ i ].object.hash;
+
+			sideWindowHash.innerHTML = hash.substring( 0, 16 ) + "<br>" + hash.substring( 16, 32 );
+			const connectionStatus = sceneManager.getConnectionStatusFromHash( hash );
+
+			if ( connectionStatus == "LIVE" ) {
+
+				sideWindowStatus.innerText = "CONNECTED";
+				sideWindowStatus.classList.add( "live-dot" );
+				sideWindowTitle.innerText = "NETWORKED PARTICIPANT";
+				sideWindowDate.innerText = "";
+				sideWindowLastConnected.style.display = "none";
+
+				if ( sceneManager.visitorParticipant.hash == hash ) {
+
+					sideWindowTitle.innerText = "YOUR FINGERPRINT";
+
+				}
+
+			} else {
+
+				sideWindowTitle.innerText = "PREVIOUS PARTICIPANT";
+				sideWindowLastConnected.style.display = "block";
+
+				sideWindowStatus.innerText = "GHOST";
+				sideWindowStatus.classList.remove( "live-dot" );
+
+				const connectionDate = new Date( connectionStatus );
+				const dateOutput = getDateString( connectionDate );
+				const timeOutput = getTimeString( connectionDate );
+
+				sideWindowLastConnected.style.display = "block";
+				sideWindowDate.innerHTML = dateOutput + "<br>" + timeOutput;
+
+			}
+
+			sceneManager.takeSnapshotOfPerson( hash );
+			onWindowResize();
+
+			break;
+
+		}
+
+	}
+
+}
 
 function onDoubleClick( event ) {
 
-	informationOverlayElement.style.opacity = 0;
+	if ( informationOverlayElement.style.opacity != 0 ) {
+
+		informationOverlayElement.style.opacity = 0;
+
+		setTimeout( () => {
+
+			if ( window.innerWidth < 750 ) {
+
+				informationOverlayElement.innerText = "Tap on a flower or person to load their details in the information tab.";
+
+			} else {
+
+				informationOverlayElement.innerText = "Click on a flower or person to load their details in the information tab.";
+
+			}
+
+			informationOverlayElement.style.opacity = 1;
+
+			setTimeout( () => {
+
+				informationOverlayElement.style.opacity = 0;
+
+			}, 8000 );
+
+		}, 4000 );
+
+	}
+
 
 	event.preventDefault();
 
@@ -311,6 +497,7 @@ function onDoubleClick( event ) {
 //renderer.domElement.addEventListener( 'dblclick', onDoubleClick, false );
 // This event is not necessary with below listener
 
+renderer.domElement.addEventListener( 'click', onClick, false );
 renderer.domElement.addEventListener( 'dbltap', onDoubleClick, false );
 // dbltap is provided by Tocca.js
 
@@ -327,14 +514,26 @@ const animate = function () {
 		sceneManager.initialiseSocketMessages();
 
 		loadingSplashElement.style.opacity = 0;
-		aboutButtonElement.style.opacity = "100%";
-		informationOverlayElement.style.opacity = "100%";
+		aboutButtonElement.style.opacity = 1;
+		informationOverlayElement.style.opacity = 1;
+		sideWindowToggleButton.style.opacity = 1;
+
+		toggleSideWindow();
+
+		if ( window.innerWidth <= 750 ) toggleSideWindow();
 
 		setInterval( () => {
 
 			sceneManager.switchLiveCameraFeed();
 
 		}, 10000 );
+
+		setTimeout( () => {
+
+			sceneManager.takeSnapshotOfPerson( fingerprintHash );
+			sideWindowHash.innerHTML = fingerprintHash.substring( 0, 16 ) + "<br>" + fingerprintHash.substring( 16, 32 );
+
+		}, 100 );
 
 	}
 
@@ -344,7 +543,7 @@ const animate = function () {
 
 		sceneManager.updateMixers( delta );
 		sceneManager.updateParticipantsTimeToLive( delta );
-		sceneManager.updateSecuritySystem( renderer );
+		sceneManager.updateSecuritySystem();
 
 	}
 
