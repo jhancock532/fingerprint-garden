@@ -329,8 +329,6 @@ const mouse = new THREE.Vector2();
 
 function onClick( event ) {
 
-	informationOverlayElement.style.opacity = 0;
-
 	event.preventDefault();
 
 	if ( event.x == null ) event.x = event.clientX;
@@ -427,7 +425,34 @@ function onClick( event ) {
 
 function onDoubleClick( event ) {
 
-	informationOverlayElement.style.opacity = 0;
+	if ( informationOverlayElement.style.opacity != 0 ) {
+
+		informationOverlayElement.style.opacity = 0;
+
+		setTimeout( () => {
+
+			if ( window.innerWidth < 750 ) {
+
+				informationOverlayElement.innerText = "Tap on a flower or person to load their details in the information tab.";
+
+			} else {
+
+				informationOverlayElement.innerText = "Click on a flower or person to load their details in the information tab.";
+
+			}
+
+			informationOverlayElement.style.opacity = 1;
+
+			setTimeout( () => {
+
+				informationOverlayElement.style.opacity = 0;
+
+			}, 8000 );
+
+		}, 4000 );
+
+	}
+
 
 	event.preventDefault();
 
@@ -494,6 +519,8 @@ const animate = function () {
 		sideWindowToggleButton.style.opacity = 1;
 
 		toggleSideWindow();
+
+		if ( window.innerWidth <= 750 ) toggleSideWindow();
 
 		setInterval( () => {
 
