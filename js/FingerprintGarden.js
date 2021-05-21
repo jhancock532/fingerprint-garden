@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { SkeletonUtils } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import TWEEN from '@tweenjs/tween.js';
 import Backendless from 'backendless'; //requires --polyfill-node to run with SnowPack, see package.json
-import { InstancedMesh } from 'three';
+import { InstancedMesh, Vector2, Vector3 } from 'three';
 
 const API_HOST = 'https://eu-api.backendless.com';
 const APP_ID = '45B6BB81-7AE1-BDD6-FF2B-68D2D53BF500';
@@ -516,10 +516,14 @@ class Garden {
 			}
 
 			let flowerMesh = this.flowerModel.scene.children[ Math.floor( generateHashValue() * 12 ) ].clone();
+			flowerMesh.name = "FLOWER";
 
 			flowerMesh.traverse( function ( child ) {
 
 				if ( child.isMesh ) {
+
+					child.hash = participantList[ i ].hash;
+					child.name = "FLOWER";
 
 					child.material = child.material.clone();
 					//Materials are global, so create new materials instead of updating referenced materials.
@@ -669,11 +673,80 @@ class Seat {
 
 }
 
-class ObserverCamera {
+class ItemViewCamera {
 
-	constructor( scene ) {
+	/*
+	A nice little note from Mugen87 on solving multiple canvases with one renderer
+	https://discourse.threejs.org/t/multiple-renderer-vs-multiple-canvas/3085/2
+	*/
+
+	constructor( scene, renderer, canvasContext ) {
 
 		this.scene = scene;
+		this.renderer = renderer;
+		this.canvasContext = canvasContext;
+
+		this.rtWidth = 200, this.rtHeight = 200;
+		const rtFov = 50, rtAspect = this.rtWidth / this.rtHeight;
+		const rtNear = 0.1, rtFar = 5;
+
+		this.camera = new THREE.PerspectiveCamera( rtFov, rtAspect, rtNear, rtFar );
+		this.camera.position.set( 0, 3, 4 );
+		this.camera.rotateX( - 1.4 );
+		//this.camera.updateProjectionMatrix();
+
+		//this.renderTarget = new THREE.WebGLRenderTarget( rtWidth, rtHeight );
+
+	}
+
+	flowerPhoto( intersection ) {
+
+		const distanceFromFlower = 0.7;
+
+		this.camera.position.set(
+			intersection.point.x - distanceFromFlower,
+			intersection.point.y + distanceFromFlower,
+			intersection.point.z - distanceFromFlower
+		);
+
+		const cameraTarget = new THREE.Vector3( intersection.point.x, 0.6, intersection.point.z );
+
+		this.camera.lookAt( cameraTarget );
+
+		this.snapshot();
+
+	}
+
+	portraitPhoto( modelPosition, cameraPosition ) {
+
+		this.camera.position.set(
+			cameraPosition.x,
+			cameraPosition.y,
+			cameraPosition.z
+		);
+
+		this.camera.lookAt( modelPosition );
+
+		this.snapshot();
+
+	}
+
+	snapshot() {
+
+		this.renderer.setSize( this.rtWidth, this.rtHeight, false );
+		this.renderer.render( this.scene, this.camera );
+		this.canvasContext.drawImage( this.renderer.domElement, 0, 0, this.rtWidth, this.rtHeight );
+
+	}
+
+}
+
+class ObserverCamera {
+
+	constructor( scene, renderer ) {
+
+		this.scene = scene;
+		this.renderer = renderer;
 
 		//Following the render target tutorial at
 		//https://threejsfundamentals.org/threejs/lessons/threejs-rendertargets.html
@@ -816,11 +889,11 @@ class ObserverCamera {
 
 	}
 
-	render( renderer ) {
+	render() {
 
-		renderer.setRenderTarget( this.renderTarget );
-		renderer.render( this.scene, this.securityCamera );
-		renderer.setRenderTarget( null );
+		this.renderer.setRenderTarget( this.renderTarget );
+		this.renderer.render( this.scene, this.securityCamera );
+		this.renderer.setRenderTarget( null );
 
 	}
 
@@ -828,12 +901,13 @@ class ObserverCamera {
 
 export class Manager {
 
-	constructor( scene ) {
+	constructor( scene, renderer, sideCanvasContext ) {
 
 		this.visitorParticipant;
 
 		this.garden = new Garden( scene );
-		this.observerCamera = new ObserverCamera( scene );
+		this.observerCamera = new ObserverCamera( scene, renderer );
+		this.itemViewCamera = new ItemViewCamera( scene, renderer, sideCanvasContext );
 
 		this.participants = [];
 		this.ghosts = [];
@@ -861,7 +935,7 @@ export class Manager {
 
 		await this.garden.loadGardenModels();
 
-		//This can be improved with promise.all somehow...
+		//This can be improved with promise.all...
 		for ( let i = 0; i < this.characterModelURLs.length; i ++ ) {
 
 			let model = await this.loadModel( this.characterModelURLs[ i ] );
@@ -1100,7 +1174,69 @@ export class Manager {
 
 	}
 
-	updateSecuritySystem( renderer ) {
+	takeSnapshotOfFlower( flowerIntersection ) {
+
+		this.itemViewCamera.flowerPhoto( flowerIntersection );
+
+	}
+
+	takeSnapshotOfPerson( hash ) {
+
+		for ( let i = 0; i < this.ghosts.length; i ++ ) {
+
+			if ( this.ghosts[ i ].hash == hash ) {
+
+				const modelPosition = this.ghosts[ i ].model.position.clone();
+				const cameraPosition = this.ghosts[ i ].model.position.clone();
+
+				let relativeCameraPosition = new THREE.Vector3( 0, 0, 1 );
+				relativeCameraPosition.applyQuaternion( this.ghosts[ i ].model.quaternion );
+
+				cameraPosition.add( relativeCameraPosition );
+				cameraPosition.add( new Vector3( 0, 2.5, 0 ) );
+				modelPosition.add( new Vector3( 0, 2, 0 ) );
+
+				this.itemViewCamera.portraitPhoto( modelPosition, cameraPosition );
+
+				return;
+
+			}
+
+		}
+
+		for ( let i = 0; i < this.participants.length; i ++ ) {
+
+			if ( this.participants[ i ].hash == hash ) {
+
+				const modelPosition = this.participants[ i ].model.position.clone();
+				const cameraPosition = this.participants[ i ].model.position.clone();
+
+				//This is handy
+				//https://stackoverflow.com/questions/10747510/how-to-rotate-a-three-js-vector3-around-an-axis
+				//But quaternions are handier!
+
+				let relativeCameraPosition = new THREE.Vector3( 0, 0, 1 );
+				relativeCameraPosition.applyQuaternion( this.participants[ i ].model.quaternion );
+
+				//Because of Euler angle magic this doesn't work :/
+				//const axis = new THREE.Vector3( 0, 1, 0 );
+				//relativeCameraPosition.applyAxisAngle( axis, modelRotation ); //where modelRotation is rotation.y
+
+				cameraPosition.add( relativeCameraPosition );
+				cameraPosition.add( new Vector3( 0, 2.5, 0 ) );
+				modelPosition.add( new Vector3( 0, 2, 0 ) );
+
+				this.itemViewCamera.portraitPhoto( modelPosition, cameraPosition );
+
+				return;
+
+			}
+
+		}
+
+	}
+
+	updateSecuritySystem() {
 
 		if ( this.observerCamera.activeCameraID == null ) {
 
@@ -1113,7 +1249,7 @@ export class Manager {
 
 		this.garden.pointCameraAtParticipant( this.observerCamera.activeCameraID, this.visitorParticipant );
 		this.observerCamera.lookAtParticipant( this.visitorParticipant );
-		this.observerCamera.render( renderer );
+		this.observerCamera.render();
 
 	}
 
@@ -1289,6 +1425,24 @@ export class Manager {
 
 	}
 
+	getConnectionStatusFromHash( hash ) {
+
+		if ( hash == this.visitorParticipant.hash ) return "LIVE";
+
+		for ( let i = 0; i < this.participants.length; i ++ ) {
+
+			if ( hash == this.participants[ i ].hash ) return "LIVE";
+
+		}
+
+		for ( let i = 0; i < this.ghostParticipantList.length; i ++ ) {
+
+			if ( hash == this.ghostParticipantList[ i ].hash ) return this.ghostParticipantList[ i ].created;
+
+		}
+
+	}
+
 	resetParticipantTimeToLive( id ) {
 
 		for ( let i = 0; i < this.participants.length; i ++ ) {
@@ -1358,6 +1512,8 @@ export class Manager {
 
 			if ( child.isMesh ) {
 
+				child.hash = hash;
+
 				//let hashPosition = child.id % 32;
 				//This assumes that each mesh has a unique id that when modded doesn't equal another mesh id
 				//Not a perfect solution, as the order in which models are loaded effects model display
@@ -1371,12 +1527,13 @@ export class Manager {
 
 				}
 
+				/* //Shadows have been removed.
 				if ( isGhost == false ) {
 
 					child.castShadow = true;
 					child.receiveShadow = true;
 
-				}
+				}*/
 
 				child.material = child.material.clone();
 				//Materials are global, so create new materials instead of updating referenced materials.

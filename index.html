@@ -44,6 +44,11 @@
         display: block;
       }
 
+      #item-view-canvas {
+        width: 200px;
+        height: 200px;
+      }
+
       #fingerprint-image, #labyrinth-image {
         display: none;
       }
@@ -193,6 +198,82 @@
           display: none;
         }
       }
+
+      #side-window {
+        background-color: rgba(0,0,0,0.9);
+        padding: 5px 0;
+        color: white;
+        opacity: 0;
+        transition: opacity 1s ease;
+        transition-delay: 2s;
+      }
+
+      #side-window-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        font-family: Consolas, 'Courier New', Courier, monospace;
+      }
+
+      #side-window-title {
+        text-align: center;
+        font-weight: bold;
+        padding-bottom: 5px;
+        margin: 0;
+      }
+
+      #side-window-status {
+        position: relative;
+        width: 100%;
+        top: 4px;
+        right: 12px;
+        text-align: end;
+        font-size: 16px;
+        color: black;
+        text-shadow: 0 0 2px #FFFFFF, 0 0 2px #FFFFFF, 0 0 2px #FFFFFF;
+        height: 0;
+      }
+
+      #side-window-toggle-button {
+        background: white;
+        color: black;
+        border-bottom: 1px solid black;
+        border-right: 1px solid black;
+        cursor: pointer;
+        text-decoration: underline;
+        padding: 5px;
+        width: max-content;
+        opacity: 0; 
+        transition: opacity 1s ease;
+        transition-delay: 2s;
+      }
+
+      .live-dot::after {
+        content: "";
+        position: relative;
+        top: -9px;
+        right: -2px;
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        background-color: red;
+        border-radius: 50%;
+        animation: green-pulse 0.5s alternate infinite; 
+      }
+
+      @keyframes green-pulse {
+        0%   { background-color: hsl(100, 100%, 50%); }
+        100% { background-color: hsl(100, 100%, 30%); }
+      }
+
+      #side-window-last-connected {
+        display: none;
+        text-align: center; 
+        border-top: 1px solid #444;
+        padding: 5px 0 2px; 
+        font-weight: bold;
+      }
+
     </style>
   </head>
   <body>
@@ -203,6 +284,19 @@
       <!--I've yoinked this <wbr> from this Stackoverflow answer - https://stackoverflow.com/questions/24488950/css-to-break-a-line-only-on-a-certain-character
       But I remember hearing of it from Robin Sloan's source code, as well as some other ancient tutorials.-->
       <p>NOW LOADING...</p>
+    </div>
+    <div id="side-window-container">
+      <div id="side-window">
+        <div id="side-window-title">YOUR FINGERPRINT</div>
+        <div id="side-window-status" class="live-dot">CONNECTED</div>
+        <div id="side-window-live-dot"></div>
+        <canvas id="item-view-canvas" width="200" height="200"></canvas>
+        <div style="text-align: center; padding-bottom: 4px; font-weight: bold;">Device Identity</div>
+        <div style="text-align: center; padding-bottom: 5px;" id="side-window-hash">LOADING...</div>
+        <div id="side-window-last-connected">Last Connected</div>
+        <div id="side-window-date" style="text-align: center;" ></div>
+      </div>
+      <div id="side-window-toggle-button">Hide Information 🠕</div>
     </div>
     <div id="about-button">About This Website</div>
     <div id="go-back-gradient"></div>
@@ -245,7 +339,7 @@
           Complete the form to see the thoughts of previous participants.
         </p>
 
-        <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdbHqiCJfNjyFL_EXZ-u3amSKwyuerL2ZSTKX8w7JIj7HkyZA/viewform?embedded=true" height="950" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+        <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdbHqiCJfNjyFL_EXZ-u3amSKwyuerL2ZSTKX8w7JIj7HkyZA/viewform?embedded=true" height="860" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
         
 
         <h2>Controls</h2>
@@ -278,7 +372,6 @@
         <p>
           Consider subscribing to my mailing list below for updates on my latest work.
         </p>
-        <br>
         <!--<iframe height="710" src="https://6854c17b.sibforms.com/serve/MUIEAAu3kJxNI3AN18oeeHrrTS_--hyKgkCZl0E-M0anlHf0YoEicXxXaYUdhegWVdepCci2oTzTunsjmWpsgDv9VpV9f0t3bPdhcm5obMhQIwHim_EHP1Io8gj1vzZ_7Q0Ht_V4FD-VVBS9WVHkLieXStcU1Borx4dJniJ7Lh0D87nhgCoEksN9PzPFmZA2QNzP8UIzogMHMUk_" frameborder="0" scrolling="auto" allowfullscreen style="display: block;margin-left: auto;margin-right: auto;max-width: 100%;"></iframe>-->
         
         <div class="sib-form" style="text-align: center; background-color: transparent;">
@@ -327,7 +420,7 @@
                   <div class="sib-input sib-form-block">
                     <div class="form__entry entry_block">
                       <div class="form__label-row ">
-                        <label class="entry__label" style="font-size:16px; text-align:left; font-weight:700; font-family:'Consolas', 'Courier New', 'Helvetica', sans-serif; color:#3c4858;" for="EMAIL" data-required="*">
+                        <label class="entry__label" style="font-size:16px; text-align:left; font-weight:700; font-family:'Consolas', 'Courier New', 'Helvetica', sans-serif; color:#000;" for="EMAIL" data-required="*">
                           Enter your email address to subscribe
                         </label>
 
