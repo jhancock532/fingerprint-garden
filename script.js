@@ -34,13 +34,13 @@ function toggleSideWindow() {
 	if ( sideWindowDisplayed ) {
 
 		sideWindow.style.display = "none";
-		sideWindowToggleButton.innerText = "Show Information Tab ↓";
+		sideWindowToggleButton.innerHTML = "Show Information <span class='show-on-desktop'>Tab </span>↓";
 
 	} else {
 
 		sideWindow.style.display = "block";
 		sideWindow.style.opacity = 1;
-		sideWindowToggleButton.innerText = "Hide Information Tab ↑";
+		sideWindowToggleButton.innerHTML = "Hide Information <span class='show-on-desktop'>Tab </span>↑";
 
 	}
 

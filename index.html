@@ -40,6 +40,7 @@
     <meta name="msapplication-TileColor" content="#00a300">
     <meta name="theme-color" content="#ffffff">
 
+    <link rel="stylesheet" href="https://sibforms.com/forms/end-form/build/sib-styles.css">
     <style>
       #sib-container input:-ms-input-placeholder {
         text-align: left;
@@ -58,9 +59,7 @@
         font-family: "Helvetica", sans-serif;
         color: #c0ccda;
       }
-    </style>
-    <link rel="stylesheet" href="https://sibforms.com/forms/end-form/build/sib-styles.css">
-    <style>
+
       body, html {
         margin: 0;
         height: 100%;
@@ -73,7 +72,8 @@
       }
 
       #item-view-canvas {
-        width: 200px;
+        min-width: 200px;
+        width: 100%;
         height: 200px;
       }
 
@@ -325,7 +325,7 @@
         <div id="side-window-last-connected">Last Connected</div>
         <div id="side-window-date" style="text-align: center;" ></div>
       </div>
-      <div id="side-window-toggle-button">Hide Information Tab ↑</div>
+      <div id="side-window-toggle-button">Hide Information <span class="show-on-desktop">Tab </span>↑</div>
     </div>
     <div id="about-button">About This Website</div>
     <div id="go-back-gradient"></div>
@@ -333,13 +333,42 @@
       <div id="about-left-column"></div>
       <div id="about-content-column">
         <h1>About</h1>
-        <p>
-          This website critiques how we are tracked on social media and across the modern web. Distracted by
-          cute design and entertaining content, we forget how much information we are sharing
-          with international advertising companies, how closely they follow our mouse movements, how intimately
-          they know our histories.
+        <br>
+        <p style="text-align: center; font-weight: bold; padding-bottom: 10px;">
+          As we watch, we are watched by others. 
           <br><br>
         </p>
+        <p>
+          Advertisers have long been tracking users so as to better sell clicks,
+          a prominent weapon in their arsenal being the browser fingerprint.
+          Through fingerprinting, humans can be tracked across websites without cookies being installed,
+          purely based on the unique characteristics of their browser.
+        </p>
+        <p>
+          Websites rarely request permission before fingerprinting; for example, 
+          this website has already taken your fingerprint and made it public to the world.
+          <noscript>(Unless you're really smart and you've deactivated JavaScript :) )</noscript>
+        </p>
+        <p>
+          Your fingerprint now lives on in this virtual garden; each flower and transparent ghost represents a past visitor,
+          while the solid character models represent a live connection.  
+          These models vary their colours and shape based on your fingerprint hash, the colourfulness of the garden emphasising 
+          our diversity online, which shows us how effectively we can be tracked.
+        </p>
+        <p>
+          Distracted by content, we are often unaware of what information we are sharing with website hosts.
+          Maybe this is just an IP address, to be cast aside in a dusty server log.
+          Maybe this is <a href="https://www.hotjar.com/" target="_blank">everywhere you moved your mouse and everything you've clicked on the webpage</a>, 
+          <a href="https://infosecwriteups.com/i-know-all-the-social-media-websites-you-are-logged-into-be5c6307d439" target="_blank">all the social media accounts you're logged into</a>, 
+          and <a href="https://amiunique.org/fp" target="_blank">all the details required to uniquely identify your device out of millions</a>.
+        </p>
+        <p>
+          Advertisers know us intimately, our data masked behind veneers of anonymity which blurs with our name and body through a myriad of terms, conditions and advertiser data sharing arrangements. 
+          We are content to share with them, to abandon and distribute ourselves across an internet of surveillance.
+          <br><br>
+        </p>
+
+        <!--
         <h2>Fingerprints</h2>
         <p>
           Browser fingerprints collect information about browsers that 
@@ -354,7 +383,7 @@
           that have visited the site in the past, now held in the garden as ghosts. These vibrant 3D models 
           show the uniqueness of our browser fingerprints, their fleeting presence in the garden forming a networked intimacy.
           <br><br>
-        </p>
+        </p>-->
         <!--
         <h2>Development</h2>
         <p>
@@ -370,7 +399,6 @@
 
         <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdbHqiCJfNjyFL_EXZ-u3amSKwyuerL2ZSTKX8w7JIj7HkyZA/viewform?embedded=true" height="860" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
         
-
         <h2>Controls</h2>
         <p class="show-on-desktop">
           Use the left mouse button to rotate the camera, the right mouse button to track, 
