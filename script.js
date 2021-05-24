@@ -34,13 +34,13 @@ function toggleSideWindow() {
 	if ( sideWindowDisplayed ) {
 
 		sideWindow.style.display = "none";
-		sideWindowToggleButton.innerText = "Show Information 🠗";
+		sideWindowToggleButton.innerText = "Show Information Tab ↓";
 
 	} else {
 
 		sideWindow.style.display = "block";
 		sideWindow.style.opacity = 1;
-		sideWindowToggleButton.innerText = "Hide Information 🠕";
+		sideWindowToggleButton.innerText = "Hide Information Tab ↑";
 
 	}
 
@@ -355,7 +355,7 @@ function onClick( event ) {
 
 			sideWindowTitle.innerText = "PREVIOUS PARTICIPANT";
 			sideWindowHash.innerHTML = hash.substring( 0, 16 ) + "<br>" + hash.substring( 16, 32 );
-			sideWindowStatus.innerHTML = "FLOWER";
+			sideWindowStatus.innerHTML = "OFFLINE FLOWER";
 			sideWindowStatus.classList.remove( "live-dot" );
 			sideWindowLastConnected.style.display = "block";
 
@@ -383,7 +383,7 @@ function onClick( event ) {
 
 			if ( connectionStatus == "LIVE" ) {
 
-				sideWindowStatus.innerText = "CONNECTED";
+				sideWindowStatus.innerText = "LIVE CONNECTION";
 				sideWindowStatus.classList.add( "live-dot" );
 				sideWindowTitle.innerText = "NETWORKED PARTICIPANT";
 				sideWindowDate.innerText = "";
@@ -400,7 +400,7 @@ function onClick( event ) {
 				sideWindowTitle.innerText = "PREVIOUS PARTICIPANT";
 				sideWindowLastConnected.style.display = "block";
 
-				sideWindowStatus.innerText = "GHOST";
+				sideWindowStatus.innerText = "OFFLINE GHOST";
 				sideWindowStatus.classList.remove( "live-dot" );
 
 				const connectionDate = new Date( connectionStatus );
@@ -498,6 +498,7 @@ function onDoubleClick( event ) {
 // This event is not necessary with below listener
 
 renderer.domElement.addEventListener( 'click', onClick, false );
+renderer.domElement.addEventListener( 'tap', onClick, false );
 renderer.domElement.addEventListener( 'dbltap', onDoubleClick, false );
 // dbltap is provided by Tocca.js
 
