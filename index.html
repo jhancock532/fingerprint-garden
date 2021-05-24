@@ -12,6 +12,34 @@
     -->
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+
+    <!-- Primary Meta Tags -->
+    <title>Fingerprint Garden</title>
+    <meta name="title" content="Fingerprint Garden">
+    <meta name="description" content="As you watch, you are watched in turn. Net art by James Hancock.">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://fingerprint.garden/">
+    <meta property="og:title" content="Fingerprint Garden">
+    <meta property="og:description" content="As you watch, you are watched in turn. Net art by James Hancock.">
+    <meta property="og:image" content="https://fingerprint.garden/img/metadata-image.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://fingerprint.garden/">
+    <meta property="twitter:title" content="Fingerprint Garden">
+    <meta property="twitter:description" content="As you watch, you are watched in turn. Net art by James Hancock.">
+    <meta property="twitter:image" content="https://fingerprint.garden/img/metadata-image.png">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#00cc37">
+    <meta name="msapplication-TileColor" content="#00a300">
+    <meta name="theme-color" content="#ffffff">
+
     <style>
       #sib-container input:-ms-input-placeholder {
         text-align: left;
@@ -104,9 +132,9 @@
         text-decoration: underline;
         font-size: 19px;
         cursor: pointer;
-        border-top: 2px solid white;
-        border-left: 2px solid white;
-        border-right: 2px solid white;
+        border-top: 1px solid white;
+        border-left: 1px solid white;
+        border-right: 1px solid white;
         opacity: 0;
         transition: opacity 1s ease;
         transition-delay: 3s;
@@ -289,7 +317,7 @@
     <div id="side-window-container">
       <div id="side-window">
         <div id="side-window-title">YOUR FINGERPRINT</div>
-        <div id="side-window-status" class="live-dot">CONNECTED</div>
+        <div id="side-window-status" class="live-dot">LIVE CONNECTION</div>
         <div id="side-window-live-dot"></div>
         <canvas id="item-view-canvas" width="200" height="200"></canvas>
         <div style="text-align: center; padding-bottom: 4px; font-weight: bold;">Device Identity</div>
@@ -297,7 +325,7 @@
         <div id="side-window-last-connected">Last Connected</div>
         <div id="side-window-date" style="text-align: center;" ></div>
       </div>
-      <div id="side-window-toggle-button">Hide Information 🠕</div>
+      <div id="side-window-toggle-button">Hide Information Tab ↑</div>
     </div>
     <div id="about-button">About This Website</div>
     <div id="go-back-gradient"></div>
@@ -510,16 +538,6 @@
     <script type="module" src="script.js"></script>
   </body>
   <footer>
-    <!-- Begin Sendinblue Form -->
-<!-- START - We recommend to place the below code in head tag of your website html  -->
-
-<!--  END - We recommend to place the above code in head tag of your website html -->
-
-<!-- START - We recommend to place the below code where you want the form in your website html  -->
-
-  <!-- END - We recommend to place the below code where you want the form in your website html  -->
-  <footer>
-  <!-- START - We recommend to place the below code in footer or bottom of your website html  -->
     <script>
       window.REQUIRED_CODE_ERROR_MESSAGE = 'Please choose a country code';
       window.LOCALE = 'en';
@@ -537,9 +555,5 @@
       var AUTOHIDE = Boolean(0);
     </script>
     <script src="https://sibforms.com/forms/end-form/build/main.js"></script>
-
-
-<!-- END - We recommend to place the above code in footer or bottom of your website html  -->
-<!-- End Sendinblue Form -->
   </footer>
 </html>
