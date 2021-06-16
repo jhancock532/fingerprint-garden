@@ -2,7 +2,6 @@
 
 Run this project with `npm start`.
 
-<br>
 ### Device Specific Bugs!
 - Doesn't load on Google Pixel 5 (two reports)
 - Doesn't load on Daniels's PC (Windows computer, none of the browsers work... works on other Windows computers, all browsers???) (one report)
@@ -10,7 +9,6 @@ Run this project with `npm start`.
 - Doesn't load on Sue's Mac when she uses Chrome (but on Safari it works fine) (one report)
 
 Sorry for my limited testing capability - this is a time constrained project and I don't have access to many other devices for debugging.
-<br>
 
 # Code Highlights!
 
