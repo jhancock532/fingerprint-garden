@@ -109,7 +109,7 @@ if ( connectionStatus == "LIVE" ) {
 
 At least it does what I want it to! I like the atomic, squential control of elements, but it's not a great idea at scale. The paragraphs of updates start getting out of hand.
 
-### JavaScript Classes are great!
+### Many Lessons in JavaScript Classes
 
 So much so I dedicated 1568 lines of code to them in my Fingerprint.js file, which is a mini game engine at this point.
 
@@ -157,7 +157,7 @@ Added in ItemViewCamera.
 	}
 ```
 
-### Finally, the model animation system...
+### Finally, the Model Animation System...
 
 As found in Participant. I am quite proud of this because it took a fair bit of trial, error and documentation combing, but the end result was just a few lines of code.
 
