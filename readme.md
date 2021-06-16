@@ -4,11 +4,11 @@ Run this project with `npm start`.
 
 ### Device Specific Bugs!
 - Doesn't load on Google Pixel 5 (two reports)
-- Doesn't load on Daniels's PC (Windows computer, none of the browsers work...) (one report)
+- Doesn't load on Daniels's PC (Windows computer, none of the browsers work... works on other Windows computers, all browsers???) (one report)
 - The flowers can't be clicked when using the Brave browser? According to Sam (one report)
 - Doesn't load on Sue's Mac when she uses Chrome (but on Safari it works fine) (one report)
 
-Sorry for the limited testing capability - this is a time limited project and I have limited access to other people's devices during a pandemic.
+Sorry for my limited testing capability - this is a time constrained project and I don't have access to many other devices for debugging.
 
 ## Code Highlights!
 
