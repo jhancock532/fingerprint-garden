@@ -77,6 +77,20 @@
         height: 200px;
       }
 
+      .error-message {
+        opacity: 0;
+        animation-name: errorAppears;
+        animation-duration: 1s;
+        animation-delay: 6s;
+        animation-iteration-count: 1;
+        animation-fill-mode: forwards;
+      }
+
+      @keyframes errorAppears {
+        0%   { opacity: 0; }
+        100% { opacity: 1; }
+      }
+
       #fingerprint-image, #labyrinth-image {
         display: none;
       }
@@ -313,6 +327,11 @@
       <!--I've yoinked this <wbr> from this Stackoverflow answer - https://stackoverflow.com/questions/24488950/css-to-break-a-line-only-on-a-certain-character
       But I remember hearing of it from Robin Sloan's source code, as well as some other ancient tutorials.-->
       <p>NOW LOADING...</p>
+      <p class="error-message">Warning! Doesn't work on some devices 😢 (e.g. Google Pixel 5?!?)
+        <br>I'm afraid I don't know why this is, it works on my machines & browsers.
+        <br>If you'd like me to fix this, please send a bug report! Or a new machine!
+        <br>Contact @jhancock532 on Twitter or via <a href="https://jameshancock.art/contact/">https://jameshancock.art/contact/</a>
+      </p>
     </div>
     <div id="side-window-container">
       <div id="side-window">
