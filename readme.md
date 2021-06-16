@@ -2,6 +2,7 @@
 
 Run this project with `npm start`.
 
+<br>
 ### Device Specific Bugs!
 - Doesn't load on Google Pixel 5 (two reports)
 - Doesn't load on Daniels's PC (Windows computer, none of the browsers work... works on other Windows computers, all browsers???) (one report)
@@ -9,8 +10,9 @@ Run this project with `npm start`.
 - Doesn't load on Sue's Mac when she uses Chrome (but on Safari it works fine) (one report)
 
 Sorry for my limited testing capability - this is a time constrained project and I don't have access to many other devices for debugging.
+<br>
 
-## Code Highlights!
+# Code Highlights!
 
 ### Canvas Resizing Best Practices
 This is the best resizing code I've found for fullscreen Three.js canvas.
@@ -51,7 +53,7 @@ if ( resizeRendererToDisplaySize( renderer ) ) {
 }
 ```
 
-### The "You should learn React" realisation
+### The "You Should Learn React" Realisation
 
 I didn't realise how much I wanted JS to interact with the DOM until it was too late to turn back.
 Hence, these decelerations near the top of `script.js`:
