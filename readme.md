@@ -12,7 +12,7 @@ Sorry for my limited testing capability - this is a time constrained project and
 
 ## Code Highlights!
 
-#### Canvas Resizing Best Practices
+### Canvas Resizing Best Practices
 This is the best resizing code I've found for fullscreen Three.js canvas.
 
 ```js
@@ -30,7 +30,7 @@ function resizeRendererToDisplaySize( renderer ) {
 
 	if ( needResize ) {
 
-		renderer.setSize( width, height, false );
+	   renderer.setSize( width, height, false );
 
 	}
 
@@ -51,7 +51,7 @@ if ( resizeRendererToDisplaySize( renderer ) ) {
 }
 ```
 
-#### The "You should learn React" realisation
+### The "You should learn React" realisation
 
 I didn't realise how much I wanted JS to interact with the DOM until it was too late to turn back.
 Hence, these decelerations near the top of `script.js`:
@@ -109,7 +109,7 @@ if ( connectionStatus == "LIVE" ) {
 
 At least it does what I want it to! I like the atomic, squential control of elements, but it's not a great idea at scale. The paragraphs of updates start getting out of hand.
 
-#### JavaScript Classes are great!
+### JavaScript Classes are great!
 
 So much so I dedicated 1568 lines of code to them in my Fingerprint.js file, which is a mini game engine at this point.
 
@@ -127,7 +127,7 @@ The Manager calls all the shots, the rest of the classes are my way of reducing 
 
 Not a huge fan of the class names, some idiosyncrasies are creeping in here...
 
-#### Spooky Scary Duplicating Model Bugs
+### Spooky Scary Duplicating Character Model Bugs
 
 A nice little ditty for future reference.
 
@@ -137,7 +137,7 @@ let mesh = SkeletonUtils.clone( this.modelMeshes[ meshNumber ] );
 //https://discourse.threejs.org/t/loading-a-gltf-model-twice-inside-the-loader-load/8373/2
 ```
 
-#### Multiple Canvas Elements in Three.js aren't Performant
+### Multiple Canvas Elements in Three.js aren't Performant
 
 So take a single render snapshot instead of rendering to two canvases continuously.
 Added in ItemViewCamera.
@@ -157,7 +157,7 @@ Added in ItemViewCamera.
 	}
 ```
 
-#### Finally, the model animation system...
+### Finally, the model animation system...
 
 As found in Participant. I am quite proud of this because it took a fair bit of trial, error and documentation combing, but the end result was just a few lines of code.
 
