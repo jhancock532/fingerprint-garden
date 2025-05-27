@@ -2,12 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { SkeletonUtils } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import TWEEN from '@tweenjs/tween.js';
-import Backendless from 'backendless'; //requires --polyfill-node to run with SnowPack, see package.json
 import { InstancedMesh, Vector2, Vector3 } from 'three';
-
-const API_HOST = 'https://eu-api.backendless.com';
-const APP_ID = '45B6BB81-7AE1-BDD6-FF2B-68D2D53BF500';
-const API_KEY = 'C754572D-9FFC-4A9F-9E2B-01D66026EDC1';
 
 const TIME_TO_LIVE = 3000; //1000 milliseconds = 1 second
 const SPAWN_DIAMETER = 10;
@@ -353,7 +348,7 @@ class Garden {
 		const matrix = new THREE.Matrix4();
 
 		//const grassInstanceMaterial = new THREE.MeshStandardMaterial( { color: 0x44ff00, roughness: 0.6, metalness: 0.1 } );
-		const grassInstanceMaterial = new THREE.MeshPhongMaterial( { color: 0x33ee00 } );
+		const grassInstanceMaterial = new THREE.MeshPhongMaterial( { color: 0x757575 } ); // Grey grass
 		//Not as nice, but slight performance benefits. Ideally, test and verify.
 		const maxGrassInstances = ( this.GRASS_LAYOUT == "FINGERPRINT" ) ? 1867 : 1317; // 1327 uses a max of 2439 with the smaller fingerprint image.
 		this.grassInstanceMesh = new InstancedMesh( this.grassModel.scene.children[ 0 ].geometry, grassInstanceMaterial, maxGrassInstances );
@@ -535,10 +530,11 @@ class Garden {
 
 					child.material.metalness = generateHashValue();
 					child.material.roughness = generateHashValue();
+					const greyScaleValueFlower = generateHashValue();
 					child.material.color = {
-						r: generateHashValue(),
-						g: generateHashValue(),
-						b: generateHashValue() };
+						r: greyScaleValueFlower,
+						g: greyScaleValueFlower,
+						b: greyScaleValueFlower };
 
 					child.material.transparent = true;
 					child.material.opacity = 0.0;
@@ -923,12 +919,6 @@ export class Manager {
 		this.modelAnimations = [];
 		this.loader = new GLTFLoader();
 
-		Backendless.serverURL = API_HOST;
-		Backendless.initApp( APP_ID, API_KEY );
-
-		this.BackendlessGhostDatabase = Backendless.Data.of( 'ghostParticipants' );
-		this.BackendlessMessagingChannel;
-
 	}
 
 	async loadAllModels() {
@@ -983,134 +973,20 @@ export class Manager {
 
 	initialiseSocketMessages() {
 
-		this.BackendlessMessagingChannel = Backendless.Messaging.subscribe( 'default' );
-		this.BackendlessMessagingChannel.addMessageListener( ( messageData ) => {
-
-			let participantObject = JSON.parse( messageData.message );
-
-			if ( participantObject.id == this.visitorParticipant.id ) return;
-
-			if ( messageData.subtopic == "NEW PARTICIPANT" ) {
-
-				this.generateNewParticipant( participantObject.id, participantObject.hash, participantObject.position, false );
-
-			}
-
-			if ( messageData.subtopic == "PRESENT" ) {
-
-				if ( this.participantIsPresent( participantObject.id ) ) {
-
-					this.resetParticipantTimeToLive( participantObject.id );
-
-				} else {
-
-					this.generateNewParticipant( participantObject.id, participantObject.hash, participantObject.position, false );
-
-				}
-
-			}
-
-			if ( messageData.subtopic == "MOVED" ) {
-
-				if ( this.participantIsPresent( participantObject.id ) ) {
-
-					this.resetParticipantTimeToLive( participantObject.id );
-
-					if ( participantObject.seatId != null ) {
-
-						participantObject.sitting = false;
-						this.garden.seats[ participantObject.seatId ].isOccupied = false;
-						participantObject.seatId = null;
-
-					}
-
-					this.moveParticipant( participantObject.id, participantObject.position );
-
-				} else {
-
-					this.generateNewParticipant( participantObject.id, participantObject.hash, participantObject.position, false );
-
-				}
-
-			}
-
-			if ( messageData.subtopic == "SITTING" ) {
-
-				if ( this.participantIsPresent( participantObject.id ) ) {
-
-					this.resetParticipantTimeToLive( participantObject.id );
-
-					const seat = this.garden.seats[ participantObject.seatId ];
-
-					if ( seat.isOccupied == false ) {
-
-						seat.isOccupied = true;
-						this.sitParticipant( participantObject.id, seat );
-
-					}
-
-				} else {
-
-					this.generateNewParticipant( participantObject.id, participantObject.hash, participantObject.position, false );
-
-					const seat = this.garden.seats[ participantObject.seatId ];
-
-					if ( seat.isOccupied == false ) {
-
-						seat.isOccupied = true;
-						this.sitParticipant( participantObject.id, seat );
-
-					}
-
-				}
-
-			}
-
-			if ( messageData.subtopic == "SEAT LEFT" ) {
-
-				this.garden.seats[ participantObject.seatLeft ].isOccupied = false;
-
-			}
-
-		} );
-
-		setInterval( () => {
-
-			Backendless.Messaging.publish( 'default', this.visitorParticipant.toJSON(), { subtopic: "PRESENT" } );
-
-		}, 2000 );
+		// This method is now empty as Backendless integration is removed.
 
 	}
 
 	loadGhostsFromDatabase() {
 
-		this.BackendlessGhostDatabase.find( Backendless.DataQueryBuilder.create().setPageSize( 100 ).setSortBy( 'created' ) )
-			.then( result => {
-
-				this.ghostParticipantList = result;
-				this.loadedGhosts = true;
-				this.garden.addParticipantFlowers( this.ghostParticipantList );
-
-				if ( DEBUG_MODE ) console.log( "GOT GHOST PARTICIPANTS: ", this.ghostParticipantList );
-
-			} );
+		this.loadedGhosts = true;
+		// Ghost participant list is now static, flowers will be handled differently or removed.
 
 	}
 
 	addParticipantToDatabase( participantHash ) {
 
-		this.BackendlessGhostDatabase.save( { hash: participantHash } )
-			.then( function ( object ) {
-
-				if ( DEBUG_MODE ) console.log( "DATABASE SAVE SUCCESSFUL: ", object );
-
-			} )
-			.catch( function ( error ) {
-
-				console.error( "DATABASE SAVE UNSUCCESSFUL: ", error.message );
-				throw error;
-
-			} );
+		// This method is now empty as Backendless integration is removed.
 
 	}
 
@@ -1128,15 +1004,23 @@ export class Manager {
 
 	addRandomGhost() {
 
-		let ghostNumber = Math.floor( Math.random() * this.ghostParticipantList.length );
+		const staticGhosts = [
+			{ objectID: "staticghost1", hash: "112233445566778899aabbccddeeff00" },
+			{ objectID: "staticghost2", hash: "aabbccddeeff00112233445566778899" },
+			{ objectID: "staticghost3", hash: "ff00112233445566778899aabbccddee" },
+			{ objectID: "staticghost4", hash: "99aabbccddeeff001122334455667788" },
+			{ objectID: "staticghost5", hash: "ddeeff00112233445566778899aabbcc" }
+		];
+
+		let ghostData = staticGhosts[ Math.floor( Math.random() * staticGhosts.length ) ];
 
 		let ghostPosition = new THREE.Vector3(
 			( Math.random() - 0.5 ) * SPAWN_DIAMETER, 0,
 			( Math.random() - 0.5 ) * SPAWN_DIAMETER );
 
 		this.generateNewParticipant(
-			this.ghostParticipantList[ ghostNumber ].objectID,
-			this.ghostParticipantList[ ghostNumber ].hash,
+			ghostData.objectID,
+			ghostData.hash,
 			ghostPosition,
 			true );
 
@@ -1144,34 +1028,27 @@ export class Manager {
 
 	updateGhosts() {
 
-		for ( let i = 0; i < this.ghosts.length; i ++ ) {
-
-			if ( this.ghosts[ i ].invisible ) {
-
-				this.scene.remove( this.ghosts[ i ].model );
+		// Vanish existing ghosts
+		for ( let i = this.ghosts.length - 1; i >= 0; i-- ) {
+			// Iterate backwards when removing elements from an array
+			if ( this.ghosts[i].invisible ) {
+				this.scene.remove( this.ghosts[i].model );
 				this.ghosts.splice( i, 1 );
 				continue;
-
 			}
-
-			if ( Math.random() > 0.7 ) {
-
-				this.ghosts[ i ].vanish();
-
+			if ( Math.random() > 0.7 ) { // Random chance to vanish
+				this.ghosts[i].vanish();
 			}
-
 		}
 
-		if ( this.ghosts.length < 5 ) {
-
-			if ( Math.random() > 0.6 ) {
-
+		// Add new ghosts if needed
+		if ( this.ghosts.length < 3 ) { // Maintain a small number of ghosts (e.g., 3)
+			// Add a new ghost (e.g., randomly or based on a timer)
+			// For simplicity, adding one randomly if count is low:
+			if ( Math.random() > 0.5 ) { // Adjust probability as needed
 				this.addRandomGhost();
-
 			}
-
 		}
-
 	}
 
 	takeSnapshotOfFlower( flowerIntersection ) {
@@ -1308,12 +1185,7 @@ export class Manager {
 		// If the current participant is sitting down
 		if ( this.visitorParticipant.seatId != null ) {
 
-			// Free the seat so that others can take it
-			Backendless.Messaging.publish( 'default', JSON.stringify( {
-				id: this.visitorParticipant.id,
-				seatLeft: this.visitorParticipant.seatId,
-			} ), { subtopic: "SEAT LEFT" } );
-
+			// Free the seat
 			this.garden.seats[ this.visitorParticipant.seatId ].isOccupied = false;
 			this.visitorParticipant.seatId = null;
 
@@ -1322,8 +1194,7 @@ export class Manager {
 		// Animate the change in position
 		this.visitorParticipant.movePosition( position, () => this.moving = false );
 
-		// Broadcast the position change and whether an occupied seat is now free
-		Backendless.Messaging.publish( 'default', this.visitorParticipant.toJSON(), { subtopic: "MOVED" } );
+		// Backendless messaging removed.
 
 	}
 
@@ -1367,12 +1238,7 @@ export class Manager {
 
 				// If the participant is currently sitting in a seat, make it free.
 				this.garden.seats[ this.visitorParticipant.seatId ].isOccupied = false;
-
-				Backendless.Messaging.publish( 'default', JSON.stringify( {
-					id: this.visitorParticipant.id,
-					seatLeft: this.visitorParticipant.seatId,
-				} ), { subtopic: "SEAT LEFT" } );
-
+				// Backendless messaging removed.
 			}
 
 			// Take the target seat
@@ -1382,8 +1248,7 @@ export class Manager {
 			// Run the sitting down animation
 			this.visitorParticipant.sitDown( seat );
 
-			// And broadcast to the group that the seat is taken
-			Backendless.Messaging.publish( 'default', this.visitorParticipant.toJSON(), { subtopic: "SITTING" } );
+			// Backendless messaging removed.
 
 		} else {
 
@@ -1435,11 +1300,7 @@ export class Manager {
 
 		}
 
-		for ( let i = 0; i < this.ghostParticipantList.length; i ++ ) {
-
-			if ( hash == this.ghostParticipantList[ i ].hash ) return this.ghostParticipantList[ i ].created;
-
-		}
+		return "01/01/2024"; // Generic status for non-live, non-visitor hashes
 
 	}
 
@@ -1468,25 +1329,7 @@ export class Manager {
 
 		console.log( this.visitorParticipant.toJSON() );
 
-		Backendless.Messaging.publish( 'default', this.visitorParticipant.toJSON(), { subtopic: "NEW PARTICIPANT" } );
-
-		let hashInDatabase = false;
-
-		for ( let i = 0; i < this.ghostParticipantList.length; i ++ ) {
-
-			if ( this.ghostParticipantList[ i ].hash == hash ) {
-
-				hashInDatabase = true;
-
-			}
-
-		}
-
-		if ( hashInDatabase == false ) {
-
-			this.addParticipantToDatabase( hash );
-
-		}
+		// Backendless messaging and database logic removed.
 
 	}
 
@@ -1494,9 +1337,8 @@ export class Manager {
 
 		if ( hash == undefined ) {
 
-			hash = "1f73a44ae0239c73a5908960cb408e1a";
-			console.log( "HASH NOT DEFINED : ", isGhost );
-
+			hash = "1f73a44ae0239c73a5908960cb408e1a"; // Default hash
+			// console.log( "HASH NOT DEFINED : ", isGhost ); // Keep if debugging is needed
 		}
 
 		hashPosition = 1; //reset so order of model loading doesn't effect how fingerprints display
@@ -1545,10 +1387,11 @@ export class Manager {
 
 				child.material.metalness = generateHashValue();
 				child.material.roughness = generateHashValue();
+				const greyScaleValueChar = generateHashValue();
 				child.material.color = {
-					r: generateHashValue(),
-					g: generateHashValue(),
-					b: generateHashValue() };
+					r: greyScaleValueChar,
+					g: greyScaleValueChar,
+					b: greyScaleValueChar };
 
 				if ( isGhost ) {
 
