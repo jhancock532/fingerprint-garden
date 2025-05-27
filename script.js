@@ -169,10 +169,10 @@ class BackgroundGUIHelper {
 
 /* Three.js */
 const scene = new THREE.Scene();
-scene.background = new THREE.Color( 0xcce0ff );
+scene.background = new THREE.Color( 0x808080 ); // Grey background
 gui.addColor( new BackgroundGUIHelper( scene.background, ), 'value' ).name( 'Background' );
 
-scene.fog = new THREE.Fog( 0xcce0ff, 10, 100 );
+scene.fog = new THREE.Fog( 0x808080, 10, 100 ); // Matching grey fog
 
 const canvas = document.getElementById( 'canvas' );
 const itemViewCanvas = document.getElementById( 'item-view-canvas' );
@@ -355,15 +355,13 @@ function onClick( event ) {
 
 			sideWindowTitle.innerText = "PREVIOUS PARTICIPANT";
 			sideWindowHash.innerHTML = hash.substring( 0, 16 ) + "<br>" + hash.substring( 16, 32 );
-			sideWindowStatus.innerHTML = "OFFLINE FLOWER";
+			sideWindowStatus.innerHTML = "ARCHIVED FLOWER";
 			sideWindowStatus.classList.remove( "live-dot" );
 			sideWindowLastConnected.style.display = "block";
 
-			const connectionStatus = sceneManager.getConnectionStatusFromHash( hash );
-
-			const connectionDate = new Date( connectionStatus );
-			const dateOutput = getDateString( connectionDate );
-			const timeOutput = getTimeString( connectionDate );
+			const genericDate = new Date("2023-01-01");
+			const dateOutput = getDateString(genericDate);
+			const timeOutput = getTimeString(genericDate);
 
 			sideWindowDate.innerHTML = dateOutput + "<br>" + timeOutput;
 
@@ -379,38 +377,19 @@ function onClick( event ) {
 			const hash = intersects[ i ].object.hash;
 
 			sideWindowHash.innerHTML = hash.substring( 0, 16 ) + "<br>" + hash.substring( 16, 32 );
-			const connectionStatus = sceneManager.getConnectionStatusFromHash( hash );
+			sideWindowStatus.innerText = "ARCHIVED VERSION";
+			sideWindowStatus.classList.remove("live-dot");
+			sideWindowTitle.innerText = "VIEWING FINGERPRINT"; // Generic title
 
-			if ( connectionStatus == "LIVE" ) {
-
-				sideWindowStatus.innerText = "LIVE CONNECTION";
-				sideWindowStatus.classList.add( "live-dot" );
-				sideWindowTitle.innerText = "NETWORKED PARTICIPANT";
-				sideWindowDate.innerText = "";
-				sideWindowLastConnected.style.display = "none";
-
-				if ( sceneManager.visitorParticipant.hash == hash ) {
-
-					sideWindowTitle.innerText = "YOUR FINGERPRINT";
-
-				}
-
+			if (sceneManager.visitorParticipant && sceneManager.visitorParticipant.hash == hash) {
+				sideWindowTitle.innerText = "YOUR FINGERPRINT";
 			} else {
-
-				sideWindowTitle.innerText = "PREVIOUS PARTICIPANT";
-				sideWindowLastConnected.style.display = "block";
-
-				sideWindowStatus.innerText = "OFFLINE GHOST";
-				sideWindowStatus.classList.remove( "live-dot" );
-
-				const connectionDate = new Date( connectionStatus );
-				const dateOutput = getDateString( connectionDate );
-				const timeOutput = getTimeString( connectionDate );
-
-				sideWindowLastConnected.style.display = "block";
-				sideWindowDate.innerHTML = dateOutput + "<br>" + timeOutput;
-
+				sideWindowTitle.innerText = "ARCHIVED FINGERPRINT";
 			}
+
+			sideWindowLastConnected.style.display = "block"; 
+			const genericDate = new Date("2023-01-01"); 
+			sideWindowDate.innerHTML = getDateString(genericDate) + "<br>" + getTimeString(genericDate);
 
 			sceneManager.takeSnapshotOfPerson( hash );
 			onWindowResize();
@@ -512,7 +491,6 @@ const animate = function () {
 
 		sceneManager.initialiseVisitorParticipant( fingerprintHash );
 		sceneManager.initialiseGhosts();
-		sceneManager.initialiseSocketMessages();
 
 		loadingSplashElement.style.opacity = 0;
 		aboutButtonElement.style.opacity = 1;
@@ -533,6 +511,9 @@ const animate = function () {
 
 			sceneManager.takeSnapshotOfPerson( fingerprintHash );
 			sideWindowHash.innerHTML = fingerprintHash.substring( 0, 16 ) + "<br>" + fingerprintHash.substring( 16, 32 );
+			sideWindowStatus.innerText = "ARCHIVED VERSION";
+			sideWindowStatus.classList.remove("live-dot");
+			// sideWindowTitle is already "YOUR FINGERPRINT" as set in index.html or earlier logic if applicable
 
 		}, 100 );
 
