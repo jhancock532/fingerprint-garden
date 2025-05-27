@@ -11,6 +11,6 @@ deploy:
   skip_cleanup: true
   github_token: $github_token
   on:
-    branch: main # Or master
+    branch: master
   local_dir: build
   target_branch: gh-pages

@@ -251,11 +251,11 @@ scene.add( shadowHelper );
 */
 
 const platformGeometry = new THREE.CylinderBufferGeometry( 6, 6, 1, 32 );
-const platformMaterial = new THREE.MeshStandardMaterial( { color: 0x666666, roughness: 0.8, metalness: 0.1 } ); // Grey platform
+const platformMaterial = new THREE.MeshStandardMaterial( { color: 0x005500, roughness: 0.8, metalness: 0.1 } );
 const platform = new THREE.Mesh( platformGeometry, platformMaterial );
 
 const platformEdgeGeometry = new THREE.CylinderBufferGeometry( 6.1, 6.1, 1, 32 );
-const platformEdgeMaterial = new THREE.MeshStandardMaterial( { color: 0x444444, roughness: 0.9, metalness: 0.1 } ); // Darker grey edge
+const platformEdgeMaterial = new THREE.MeshStandardMaterial( { color: 0x555555, roughness: 0.9, metalness: 0.1 } );
 const platformEdge = new THREE.Mesh( platformEdgeGeometry, platformEdgeMaterial );
 
 platform.name = "GROUND";

@@ -348,7 +348,7 @@ class Garden {
 		const matrix = new THREE.Matrix4();
 
 		//const grassInstanceMaterial = new THREE.MeshStandardMaterial( { color: 0x44ff00, roughness: 0.6, metalness: 0.1 } );
-		const grassInstanceMaterial = new THREE.MeshPhongMaterial( { color: 0x757575 } ); // Grey grass
+		const grassInstanceMaterial = new THREE.MeshPhongMaterial( { color: 0x33ee00 } );
 		//Not as nice, but slight performance benefits. Ideally, test and verify.
 		const maxGrassInstances = ( this.GRASS_LAYOUT == "FINGERPRINT" ) ? 1867 : 1317; // 1327 uses a max of 2439 with the smaller fingerprint image.
 		this.grassInstanceMesh = new InstancedMesh( this.grassModel.scene.children[ 0 ].geometry, grassInstanceMaterial, maxGrassInstances );
@@ -1005,11 +1005,11 @@ export class Manager {
 	addRandomGhost() {
 
 		const staticGhosts = [
-			{ objectID: "staticghost1", hash: "112233445566778899aabbccddeeff00" },
-			{ objectID: "staticghost2", hash: "aabbccddeeff00112233445566778899" },
-			{ objectID: "staticghost3", hash: "ff00112233445566778899aabbccddee" },
-			{ objectID: "staticghost4", hash: "99aabbccddeeff001122334455667788" },
-			{ objectID: "staticghost5", hash: "ddeeff00112233445566778899aabbcc" }
+			{ objectID: "staticghost1", hash: "00050001010000010000100000100000" },
+			{ objectID: "staticghost2", hash: "30000001010000010000100000100000" },
+			{ objectID: "staticghost3", hash: "50200001010000010000100000100000" },
+			{ objectID: "staticghost4", hash: "40004001010000010000100000100000" },
+			{ objectID: "staticghost5", hash: "20010001010000010000100000100000" }
 		];
 
 		let ghostData = staticGhosts[ Math.floor( Math.random() * staticGhosts.length ) ];
